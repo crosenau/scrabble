@@ -1,20 +1,16 @@
+import Tile from './Tile.js';
+
 const Board = (props) => {
   return (
     <div className='board'>
     {props.gameBoard.flat().map((square, i) => {
       return square.tile ? (
-        <div 
-          className='tile' 
-          onMouseDown={() => props.grabTile(square.tile, i, false)}
-          key={i}
-        >
-          <div className='tile-text'>
-            {square.tile.text}
-          </div>
-          <div className='tile-points'>
-            {square.tile.points}
-          </div>
-        </div>
+        <Tile 
+          grabTile={props.grabTile}
+          tile={square.tile}
+          position={i}
+          fromRack={false}
+        />
       )
       : (
       <div 

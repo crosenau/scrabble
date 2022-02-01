@@ -1,9 +1,10 @@
 const Tile = (props) => {
   return (
     <div 
-      className={props.classname || 'tile'} 
-      onMouseDown={() => props.grabTile(props.tile, props.key, true)} 
-      key={props.key}
+      className={props.className || 'tile'}
+      style={props.style}
+      onMouseDown={() => props.grabTile(props.tile, props.position, props.fromRack)}
+      position={props.position}
     >
     <div className='tile-text'>
       {props.tile.text}
@@ -14,3 +15,5 @@ const Tile = (props) => {
   </div>
   );
 }
+
+export default Tile;

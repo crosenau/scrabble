@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Board from './Board.js';
 import Rack from './Rack.js';
-import GrabbedTile from "./GrabbedTile.js";
+import Tile from "./Tile.js";
 
 import { createEmptyBoard, get2dPos } from "../utils/boardUtils.js";
 import createTileBag from "../utils/bagUtils.js";
@@ -11,9 +11,6 @@ const Game = () => {
   const [ tileBag, setTileBag ] = useState(createTileBag());
   const [ playerTiles, setPlayerTiles ] = useState([]);
   const [ grabbedTile, setGrabbedTile ] = useState(null);
-  const [grabbedPosX, setGrabbedPosX] = useState('0px');
-  const [grabbedPosY, setGrabbedPosY] = useState('0px'); 
-
 
   const drawTiles = () => {
     const numTiles = 7 - playerTiles.length;
@@ -25,13 +22,21 @@ const Game = () => {
     setGrabbedTile({
       tile,
       position,
-      fromRack
+      fromRack,
+      dragPosX: '',
+      dragPosY: ''
     });
   }
 
   const moveGrabbedTile = (x, y) => {
-    setGrabbedPosX(`${x - 20}px`);
-    setGrabbedPosY(`${y - 20}px`);
+    if (!grabbedTile) return;
+
+    const updatedGrabbedTile = {...grabbedTile};
+
+    updatedGrabbedTile.dragPosX = `${x - 20}px`;
+    updatedGrabbedTile.dragPosY = `${y - 20}px`;
+
+    setGrabbedTile(updatedGrabbedTile);
   }
 
   const placeTile = (position, onRack) => {
@@ -51,7 +56,6 @@ const Game = () => {
     if (grabbedTile.fromRack) {
       
       updatedPlayerTiles[grabbedTile.position] = null;
-      console.log(updatedPlayerTiles);
     } else {
       const pos2d = get2dPos(grabbedTile.position);
 
@@ -70,12 +74,16 @@ const Game = () => {
         moveGrabbedTile(e.clientX, e.clientY);
       }}
     >
-     <Board gameBoard={gameBoard} placeTile={placeTile} grabTile={grabTile}/>
-     <Rack tiles={playerTiles} placeTile={placeTile} grabTile={grabTile}/>
-     { grabbedTile ? 
-        <GrabbedTile tile={grabbedTile.tile} style={{top:grabbedPosY, left:grabbedPosX}} />
+      <Board gameBoard={gameBoard} placeTile={placeTile} grabTile={grabTile}/>
+      <Rack tiles={playerTiles} placeTile={placeTile} grabTile={grabTile}/>
+      { grabbedTile ? 
+        <Tile 
+          className='tile-grabbed'
+          tile={grabbedTile.tile} 
+          style={{top:grabbedTile.dragPosY, left:grabbedTile.dragPosX}} 
+        />
       : null }
-     <button onClick={e => drawTiles()}>Start Game</button>
+      <button onClick={e => drawTiles()}>Start Game</button>
     </div>
   )
 };

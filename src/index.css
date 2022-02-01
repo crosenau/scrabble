@@ -115,6 +115,7 @@ code {
 }
 
 .tile {
+  user-select: none;
   background-color: #d69f7f;
   display: grid;
   grid-template-columns: repeat(5, 1fr);
