@@ -3,8 +3,8 @@ const Tile = (props) => {
     <div 
       className={props.className || 'tile'}
       style={props.style}
-      onMouseDown={() => props.grabTile(props.tile, props.position, props.fromRack)}
-      position={props.position}
+      onMouseDown={() => props.grabTile(props.tile, props.index, props.fromRack)}
+      index={props.index}
     >
     <div className='tile-text'>
       {props.tile.text}

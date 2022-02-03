@@ -1,15 +1,16 @@
-const {floor, random } = Math; 
+const { floor, random } = Math; 
 
-const createTile = (text, points) => {
+const createTile = (text, points, played = false) => {
   return {
-    text: text,
-    points: points
+    text,
+    points,
+    played
   };
 };
 
 const createTileBag = () => {
   const tiles = [
-    { text: null, points: 0, numTiles: 2 },
+    //{ text: null, points: 0, numTiles: 2 },
     { text: 'A', points: 1, numTiles: 9 },
     { text: 'B', points: 3, numTiles: 2 },
     { text: 'C', points: 3, numTiles: 2 },
@@ -39,14 +40,26 @@ const createTileBag = () => {
   ];
   const bag = [];
 
-  while (tiles.length > 0) {
-    const next = floor(random() * tiles.length);
+  /* Testing
+  bag.push(createTile(tiles[16].text, tiles[16].points));
+  bag.push(createTile(tiles[12].text, tiles[12].points));
+  bag.push(createTile(tiles[1].text, tiles[1].points));
+  bag.push(createTile(tiles[14].text, tiles[14].points));
+  bag.push(createTile(tiles[20].text, tiles[20].points));
+  bag.push(createTile(tiles[5].text, tiles[5].points));
+  bag.push(createTile(tiles[18].text, tiles[18].points));
 
-    if (tiles[next].numTiles > 0) {
-      bag.push(createTile(tiles[next].text, tiles[next].points));
-      tiles[next].numTiles--;
+  return bag;
+  */
+
+  while (tiles.length > 0) {
+    const tile = floor(random() * tiles.length);
+
+    if (tiles[tile].numTiles > 0) {
+      bag.push(createTile(tiles[tile].text, tiles[tile].points));
+      tiles[tile].numTiles--;
     } else {
-      tiles.splice(next, 1);
+      tiles.splice(tile, 1);
     }
   }
 

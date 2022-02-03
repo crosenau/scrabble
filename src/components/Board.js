@@ -8,8 +8,9 @@ const Board = (props) => {
         <Tile 
           grabTile={props.grabTile}
           tile={square.tile}
-          position={i}
+          index={i}
           fromRack={false}
+          key={i}
         />
       )
       : (

@@ -1,3 +1,5 @@
+import Tile from "./Tile.js";
+
 const Rack = (props) => {
   const tiles = [...props.tiles];
   const maxTiles = 7;
@@ -10,18 +12,13 @@ const Rack = (props) => {
     <div className='rack'>
       {tiles.map((tile, i) => {
         return tile ? (
-          <div 
-            className='tile' 
-            onMouseDown={() => props.grabTile(tile, i, true)} 
+          <Tile 
+            grabTile={props.grabTile}
+            tile={tile}
+            index={i}
+            fromRack={true}
             key={i}
-          >
-            <div className='tile-text'>
-              {tile.text}
-            </div>
-            <div className='tile-points'>
-              {tile.points}
-            </div>
-          </div>
+          />
         )
         : <div 
             className='rack-empty' 
