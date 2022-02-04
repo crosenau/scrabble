@@ -1,12 +1,12 @@
-import Tile from './Tile.js';
+import Tile from './Tile';
 
-const Board = (props) => {
+export default function Board({ gameBoard, grabTile, placeTile }) {
   return (
     <div className='board'>
-    {props.gameBoard.flat().map((square, i) => {
+    {gameBoard.flat().map((square, i) => {
       return square.tile ? (
         <Tile 
-          grabTile={props.grabTile}
+          clickHandler={grabTile}
           tile={square.tile}
           index={i}
           fromRack={false}
@@ -16,7 +16,7 @@ const Board = (props) => {
       : (
       <div 
         className={square.className} 
-        onMouseUp={() => props.placeTile(i, false)}
+        onClick={() => placeTile(i, false)}
         key={i}
       >
         {square.text && (
@@ -30,5 +30,3 @@ const Board = (props) => {
     </div>
   );
 }
-
-export default Board;

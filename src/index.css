@@ -115,6 +115,7 @@ code {
 }
 
 .tile {
+  cursor: grab;
   user-select: none;
   background-color: #d69f7f;
   display: grid;
@@ -176,4 +177,27 @@ code {
   background-color: #5c4131;
   width: var(--tile-size);
   height: var(--tile-size);
+}
+
+.letter-selection-overlay {
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 999;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.letter-selection {
+  width: calc(var(--tile-size * 6)); 
+  height: calc(var(--tile-size * 5));
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  background-color: #782427;
+  padding: 20px;
 }

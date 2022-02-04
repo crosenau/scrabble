@@ -1,6 +1,6 @@
 import Game from './components/Game.js';
 
-function App() {
+export default function App() {
   return (
     <div className="app">
       <Game />
@@ -8,4 +8,3 @@ function App() {
   );
 }
 
-export default App;

@@ -1,19 +1,17 @@
-const Tile = (props) => {
+export default function Tile({ tile, className, style, clickHandler, fromRack, index }) {
   return (
     <div 
-      className={props.className || 'tile'}
-      style={props.style}
-      onMouseDown={() => props.grabTile(props.tile, props.index, props.fromRack)}
-      index={props.index}
+      className={className || 'tile'}
+      style={style}
+      onClick={(e) => clickHandler(e, tile, index, fromRack)}
+      index={index}
     >
     <div className='tile-text'>
-      {props.tile.text}
+      {tile.text}
     </div>
     <div className='tile-points'>
-      {props.tile.points}
+      {tile.points}
     </div>
   </div>
   );
 }
-
-export default Tile;
