@@ -1,17 +1,20 @@
-export default function Tile({ tile, className, style, clickHandler, fromRack, index }) {
+export default function Tile({ tile, style, clickHandler, index }) {  
   return (
     <div 
-      className={className || 'tile'}
+      className={tile.className}
       style={style}
-      onClick={(e) => clickHandler(e, tile, index, fromRack)}
+      onClick={(e) => clickHandler(e, tile, index)}
       index={index}
     >
-    <div className='tile-text'>
-      {tile.text}
+      <div className={tile.totalPoints ? 'tile-total-points' : null}>
+        {tile.totalPoints}
+      </div>
+      <div className='tile-letter'>
+        {tile.letter}
+      </div>
+      <div className='tile-points'>
+        {tile.points}
+      </div>
     </div>
-    <div className='tile-points'>
-      {tile.points}
-    </div>
-  </div>
   );
 }

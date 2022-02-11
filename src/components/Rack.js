@@ -1,11 +1,37 @@
 import Tile from "./Tile";
 
-export default function Rack({ tiles, grabTile, placeTile }) {
-  const updatedTiles = [...tiles];
+
+export default function Rack({ rack, setRack, grabbedTile, setGrabbedTile }) {
+  const updatedTiles = [...rack];
   const maxTiles = 7;
 
   while (updatedTiles.length < maxTiles) {
     updatedTiles.push(null);
+  }
+
+  const tileClickHandler = (e, tile, index) => {
+    if (grabbedTile !== null) return;
+    let updatedrack = [...rack];
+    updatedrack[index] = null;
+    setRack(updatedrack);
+    setGrabbedTile({
+      ...tile,
+      letter: tile.points > 0 ? tile.letter : null,
+      className: 'tile-grabbed',
+      dragPosX: `${e.clientX - 20}px`,
+      dragPosY: `${e.clientY - 20}px`,
+    });
+  }
+
+  const rackClickHandler = (index) => {
+    if (grabbedTile === null) return;
+    let updatedrack = [...rack];
+    updatedrack[index] = {
+      ...grabbedTile,
+      className: 'tile'
+    };
+    setRack(updatedrack);
+    setGrabbedTile(null);
   }
 
   return (
@@ -13,16 +39,15 @@ export default function Rack({ tiles, grabTile, placeTile }) {
       {updatedTiles.map((tile, i) => {
         return tile ? (
           <Tile 
-            clickHandler={grabTile}
             tile={tile}
             index={i}
-            fromRack={true}
+            clickHandler={(e) => tileClickHandler(e, tile, i)}
             key={i}
           />
         )
         : <div 
             className='rack-empty' 
-            onClick={() => placeTile(i, true)}
+            onClick={() => rackClickHandler(i)}
             key={i}
           ></div>
       })}

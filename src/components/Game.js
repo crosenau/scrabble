@@ -3,45 +3,29 @@ import Board from './Board';
 import Rack from './Rack';
 import Tile from './Tile';
 
-import { createEmptyBoard, get2dPos } from '../utils/boardUtils';
-import { getTileBag, getLetterSelection, getTestBag } from '../utils/bagUtils';
+import {
+  createEmptyBoard,
+  isValidPlacement,
+  getPlayableWords,
+  editBoardByFilter,
+  editBoardByIndices
+} from '../utils/boardUtils';
+import { getTileBag, getAllLetters, getTestBag } from '../utils/bagUtils';
 import { isWord } from '../utils/dictionary';
 import LetterSelection from './LetterSelection';
 
 export default function Game() {
-  const [gameBoard, setGameBoard] = useState(createEmptyBoard());
+  const [board, setBoard] = useState(createEmptyBoard());
   const [tileBag, setTileBag] = useState(getTestBag());
-  const [playerTiles, setPlayerTiles] = useState([]);
+  const [rack, setRack] = useState([]);
   const [grabbedTile, setGrabbedTile] = useState(null);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
-  const [letterSelection, setLetterSelection] = useState(getLetterSelection());
+  const [letterSelection, setLetterSelection] = useState(getAllLetters());
 
   const drawTiles = () => {
-    const numTiles = 7 - playerTiles.length;
-    setPlayerTiles([...playerTiles].concat(tileBag.slice(0, numTiles)));
+    const numTiles = 7 - rack.length;
+    setRack([...rack].concat(tileBag.slice(0, numTiles)));
     setTileBag([...tileBag].slice(numTiles));
-  };
-
-  const grabTile = (event, tile, fromIndex, fromRack) => {
-    const updatedPlayerTiles = [...playerTiles];
-    const updatedBoard = JSON.parse(JSON.stringify(gameBoard));
-    if (fromRack) {
-      updatedPlayerTiles[fromIndex] = null;
-    } else {
-      const pos2d = get2dPos(fromIndex);
-      updatedBoard[pos2d[0]][pos2d[1]].tile = null;
-    }
-    
-    setGrabbedTile({
-      ...tile,
-      text: tile.points > 0 ? tile.text : null,
-      dragPosX: `${event.clientX - 20}px`,
-      dragPosY: `${event.clientY - 20}px`,
-    });
-    
-    setPlayerTiles(updatedPlayerTiles);
-    setGameBoard(updatedBoard);
-    console.log('finished')
   };
 
   const moveGrabbedTile = (event) => {
@@ -52,148 +36,78 @@ export default function Game() {
     setGrabbedTile(updatedGrabbedTile);
   };
 
-  const placeTile = (toIndex, onRack) => {
-    if (grabbedTile === null) return;  
-    const updatedPlayerTiles = [...playerTiles];
-    const updatedBoard = JSON.parse(JSON.stringify(gameBoard));
-
-    // Place Tile at new position
-    if (onRack) {
-      updatedPlayerTiles[toIndex] = grabbedTile;
-    } else {
-      const pos2d = get2dPos(toIndex);
-      updatedBoard[pos2d[0]][pos2d[1]].tile = grabbedTile;
-    }
-    setPlayerTiles(updatedPlayerTiles);
-    setGameBoard(updatedBoard);
-    setGrabbedTile(null);
-    if (!onRack && grabbedTile.text === null) {
-      console.log('adding toIndex to grabbedTile')
-      setLetterSelectVisible(true);
-    }
-  }
-
   const selectLetter = (letter) => {
-    console.log('setLetter');
-    const updatedGameBoard = gameBoard;
+    const updatedboard = board;
     
-    updatedGameBoard.forEach((row) => {
+    updatedboard.forEach((row) => {
       row.forEach((square) => {
-        if (square.tile && square.tile.text === null) {
-          square.tile.text = letter;
+        if (square.tile && square.tile.letter === null) {
+          square.tile.letter = letter;
         }
       });
     });
 
-    setGameBoard(updatedGameBoard);
+    setBoard(updatedboard);
     setLetterSelectVisible(false);
   };
 
   const playWord = () => {
-    if (!isValidPlacement()) {
+    let updatedBoard = JSON.parse(JSON.stringify(board));
+    if (!isValidPlacement(board)) {
       alert('Invalid Move');
-      // hightlight invalid tiles
+      editBoardByFilter(
+        updatedBoard,
+        (square) => square.tile && !square.tile.played,
+        (square) => square.tile.className = 'tile-invalid'
+      );
+      setBoard(updatedBoard);
       return;
     }
-    const playedWords = getPlayedWords();
+
+    const playedWords = getPlayableWords(board);
     if (playedWords.length === 0) {
-      alert('invalid word');
-      // hightlight invalid word
+      alert('no played words');
+      editBoardByFilter(
+        updatedBoard,
+        (square) => square.tile && !square.tile.played,
+        (square) => square.tile.className = 'tile-invalid'
+      );
+      setBoard(updatedBoard);
+      return;
     }
+
     playedWords.forEach((word) => {
       let text = '';
       word.forEach((square) => {
-        text += square.tile.text;
+        text += square.tile.letter;
       });
+      const indices = word.map(square => square.index);
       console.log(isWord(text));
       if (isWord(text) === false) {
         alert(`${text} is not a valid word`);
-        // highlight invalid word
+        editBoardByFilter(
+          updatedBoard,
+          (square) => square.tile && indices.includes(square.index),
+          (square) => square.tile.className = 'tile-invalid'
+        );
+        setBoard(updatedBoard);
+        return;
       } else {
         const score = scoreWord(word);
+        editBoardByIndices(
+          updatedBoard, 
+          indices, 
+          (square) => square.tile.className = 'tile-scored'
+        );
+        editBoardByIndices(
+          updatedBoard,
+          indices[indices.length-1],
+          (square) => square.tile.totalPoints = score
+        )
+        setBoard(updatedBoard);
         console.log(`${text} played for ${score} points.`);
       }
     });
-  };
-
-  const isValidPlacement = () => {
-    console.log('isValidPlacement');
-    if (!gameBoard[7][7].tile) {
-      console.log('Center square is not filled');
-      return false;
-    }
-    const playedTileIndices = [];
-    gameBoard.forEach((row) => {
-      row.forEach((square) => {
-        if (square.tile && !square.tile.played) {
-          playedTileIndices.push(square.index);
-        }
-      });
-    });
-    const validGaps = [1, 15];
-    let previousGap = null;
-    for (let x = 1; x < playedTileIndices.length; x += 1) {
-      if (!previousGap) {
-        if (!validGaps.includes(playedTileIndices[x] - playedTileIndices[x-1])) {
-          console.log('initial difference invalid');
-          return false;
-        }
-      } else if (
-        previousGap
-        && playedTileIndices[x] - playedTileIndices[x - 1] !== previousGap
-      ) {
-        console.log('mismatched differences');
-        return false;
-      }
-      previousGap = playedTileIndices[x] - playedTileIndices[x - 1];
-    }
-    return true;
-  };
-
-  /**
-   * Return all rows and columns containing multiple tiles with at least one that is unplayed.
-   * @returns [Array]
-   */
-  const getPlayedWords = () => {
-    console.log('getPlayedWords');
-    const extractPlayedWords = (line) => {
-      const words = [];
-      let potentialWord = [];
-      let containsUnplayedTile = false;
-
-      line.forEach((square) => {
-        if (square.tile === null) {
-          if (potentialWord.length > 1 && containsUnplayedTile) {
-            words.push(potentialWord);
-          }
-          potentialWord = [];
-          containsUnplayedTile = false;
-        } else if (square.tile !== null) {
-          if (!square.tile.played) {
-            containsUnplayedTile = true;
-          }
-          potentialWord.push(square);
-        }
-      });
-      return words;
-    };
-
-    const playableWords = [];
-    gameBoard.forEach((row) => {
-      const words = extractPlayedWords(row);
-      if (words.length > 0) {
-        playableWords.push(words.flat());
-      }
-    });
-    const transposedBoard = gameBoard[0].map((_, colIndex) => (
-      gameBoard.map((row) => row[colIndex])));
-    transposedBoard.forEach((row) => {
-      const words = extractPlayedWords(row);
-      if (words.length > 0) {
-        playableWords.push(words.flat());
-      }
-    });
-    return playableWords;
   };
 
   const scoreWord = (word) => {
@@ -213,30 +127,33 @@ export default function Game() {
         playedTiles += 1;
       }
     });
+
     score *= wordScoreMod;
     score += (playedTiles === 7) ? 50 : 0;
     return score;
   };
 
   return (
-    <div
-      className="game"
-      onMouseMove={(e) => moveGrabbedTile(e)}
-    >
+    <div className="game" onMouseMove={(e) => moveGrabbedTile(e)}>
       <Board
-        gameBoard={gameBoard}
-        placeTile={placeTile}
-        grabTile={grabTile}
+        board={board}
+        setBoard={setBoard}
+        grabbedTile={grabbedTile} 
+        setGrabbedTile={setGrabbedTile}
+        setLetterSelectVisible={setLetterSelectVisible}
       />
-      <Rack tiles={playerTiles} placeTile={placeTile} grabTile={grabTile}/>
+      <Rack 
+        rack={rack} 
+        setRack={setRack} 
+        grabbedTile={grabbedTile} 
+        setGrabbedTile={setGrabbedTile}
+      />
       { grabbedTile ? (
         <Tile
-          className="tile-grabbed"
           tile={grabbedTile}
           style={{ top:grabbedTile.dragPosY, left:grabbedTile.dragPosX }}
         />
-      )
-        : null }
+      ) : null }
       <button type="button" onClick={() => drawTiles()}>Start Game</button>
       <button type="button" onClick={() => playWord()}>Play</button>
       { letterSelectVisible ? (
