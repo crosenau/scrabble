@@ -1,5 +1,6 @@
 :root {
-  --tile-size: 3vw;
+  --tile-size: 50px;
+  --tile-margin: 1px;
 }
 
 body {
@@ -7,28 +8,75 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #111;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+.app {
+  height: 100vh;
+  background-color: #2C3E50;
+  display: flex;
+  flex-direction: column;
 }
 
 .game {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+}
+
+.players {
+  width: 40%;
+  display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 }
 
+#player-list {
+  display: flex;
+  flex-direction: column;
+  align-items: space-between;
+  width: 80%;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  margin: 10px;
+  box-shadow: 0 10px 20px #000a;
+}
+
+.player-name {
+  display: flex;
+  color: #333;
+  background-color: #ECF0F1;
+  font-size: 3em;
+  padding: 5px 10px;
+}
+
+.player-score {
+  display: flex;
+  color: #ddd;
+  background-color: #2980B9;
+  font-size: 2em;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: right;
+}
+
+#table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 60%;
+}
+
 .board {
-  background-color: #782427;
+  background-color: #200a0b;
   display: grid;
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: repeat(15, 1fr);
-  justify-content: flex-start;
-  align-items: flex-start;
-  padding: calc(var(--tile-size) / 8);
+  max-width: calc(var(--tile-size) * 16);
+  max-height: calc(var(--tile-size) * 16);
+  padding: calc(var(--tile-size) / 4);
 }
 
 .square {
@@ -38,7 +86,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
 }
 
 .square-center {
@@ -47,7 +95,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #A93249;
 }
 
@@ -57,7 +105,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #F06A13;
 }
 
@@ -67,7 +115,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #A93249;
 }
 
@@ -77,7 +125,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #619437;
 }
 
@@ -87,7 +135,7 @@ code {
   justify-content: center;
   width: var(--tile-size);
   height: var(--tile-size);
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #4B9DCC;
 }
 
@@ -107,7 +155,7 @@ code {
   width: var(--tile-size);
   height: var(--tile-size);
   border-radius: 6px;
-  margin: 1px;
+  margin: var(--tile-margin);
   cursor: grab;
   background-color: #d69f7f;
 }
@@ -122,7 +170,7 @@ code {
   width: var(--tile-size);
   height: var(--tile-size);
   border-radius: 6px;
-  margin: 1px;
+  margin: var(--tile-margin);
   position: absolute;
   pointer-events: none;
   opacity: 75%;
@@ -139,7 +187,7 @@ code {
   width: var(--tile-size);
   height: var(--tile-size);
   border-radius: 6px;
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #da6c6c;
 }
 
@@ -153,7 +201,7 @@ code {
   width: var(--tile-size);
   height: var(--tile-size);
   border-radius: 6px;
-  margin: 1px;
+  margin: var(--tile-margin);
   background-color: #9fd67f;
 }
 
@@ -194,6 +242,13 @@ code {
   border-radius: 50%;
 }
 
+#controls {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
 .rack {
   background-color: #775642;
   display: flex;
@@ -204,9 +259,21 @@ code {
 
 .rack-empty {
   background-color: #5c4131;
-  margin: 1px;
+  margin: var(--tile-margin);
   width: var(--tile-size);
   height: var(--tile-size);
+}
+
+#button-container-1 {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+#button-container-2 {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
 }
 
 .letter-selection-overlay {

@@ -50,7 +50,8 @@ const allTiles = [
   { letter: 'Z', points: 10, numTiles: 1 },
 ];
 
-const getTileBag = () => {
+const createTileBag = () => {
+  console.log('createTileBag')
   const tiles = allTiles.map(tile => { return {...tile} });
   const bag = [];
 
@@ -70,7 +71,7 @@ const getTileBag = () => {
   return bag;
 };
 
-const getTestBag = () => {
+const createTestBag = () => {
   const bag = [];
   // Testing
   bag.push(createTile(allTiles[16].letter, allTiles[16].points));
@@ -84,7 +85,7 @@ const getTestBag = () => {
   return bag;
 }
 
-const getAllLetters = () => {
+const getAllTiles = () => {
   const letters = [];
   for (let x = 1; x < allTiles.length; x++) {
     letters.push(createTile(allTiles[x].letter, null));
@@ -93,4 +94,4 @@ const getAllLetters = () => {
   return letters;
 }
 
-export { getTileBag, getTestBag, getAllLetters };
+export { createTileBag, createTestBag, getAllTiles };

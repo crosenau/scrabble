@@ -6,13 +6,13 @@ export default function Tile({ tile, style, clickHandler, index }) {
       onClick={(e) => clickHandler(e, tile, index)}
       index={index}
     >
-      <div className={tile.totalPoints ? 'tile-total-points' : null}>
+      <div className={tile.totalPoints ? "tile-total-points" : null}>
         {tile.totalPoints}
       </div>
-      <div className='tile-letter'>
+      <div className="tile-letter">
         {tile.letter}
       </div>
-      <div className='tile-points'>
+      <div className="tile-points">
         {tile.points}
       </div>
     </div>

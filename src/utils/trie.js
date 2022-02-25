@@ -39,7 +39,7 @@ class Trie {
 
     return this.isWord(word.slice(1), node.keys.get(word[0]));
   }
-  print(node = this.root, currentWord = "", wordList = []) {
+  print(node = this.root, currentWord = '', wordList = []) {
     if (node.isEnd() === true) {
       wordList.push(currentWord);
     }

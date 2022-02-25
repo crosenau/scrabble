@@ -233,6 +233,27 @@ const editBoardByIndices = (board, indices, edit) => {
   }
 }
 
+const getPlacedTiles = (board) => {
+  const tiles = board.flat().map((square) => {
+    if (square.tile) {
+      return square.tile;
+    }
+
+    return null;
+  }).filter((tile) => tile !== null);
+
+  return tiles;
+}
+
+const addTilesToBoard = (tiles, board) => {
+  for (let tile of tiles) {
+    const [row, col] = get2dPos(tile.index);
+    board[row][col].tile = tile;
+  }
+
+  return board;
+}
+
 export {
   createEmptyBoard,
   get2dPos,
@@ -240,5 +261,7 @@ export {
   getPlayableWords,
   getUnplayedTileCoords,
   editBoardByFilter,
-  editBoardByIndices
+  editBoardByIndices,
+  getPlacedTiles,
+  addTilesToBoard
 };
