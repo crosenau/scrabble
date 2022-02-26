@@ -1,6 +1,5 @@
 import { useContext } from 'react';
 import { UserContext } from '../../contexts/UserContext';
-import { GameContext } from '../../contexts/GameContext';
 import GameList from './GameList';
 import useFetch from '../../utils/useFetch'; 
 
@@ -14,7 +13,7 @@ export default function MyGames() {
 
   return (
     <div className="menu">
-      <GameList games={data} />
+      <GameList games={data} buttonLabel="Resume" />
     </div>
   );
 }

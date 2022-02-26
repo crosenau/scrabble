@@ -10,7 +10,7 @@ export default function BrowseGames() {
 
   return (
     <div className="menu">
-      <GameList games={data} />
+      <GameList games={data} buttonLabel="Join" />
     </div>
   );
 }

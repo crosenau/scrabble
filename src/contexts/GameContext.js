@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { UserContext } from './UserContext';
 import {
   get2dPos,
@@ -21,6 +21,7 @@ export default function GameContextProvider(props) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [gameId, setGameId] = useState(null);
+  const [gameName, setGameName] = useState(null);
   const [board, setBoard] = useState(null);
   const [tileBag, setTileBag] = useState(null);
   const [rack, setRack] = useState([]);
@@ -28,6 +29,35 @@ export default function GameContextProvider(props) {
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
   const [turns, setTurns] = useState(0);
   const [players, setPlayers] = useState([]);
+
+  useEffect(() => {
+    async function checkThenUploadGame() {
+      if (gameId === null) return;
+      setIsLoading(true);
+      let url, method;
+
+      try {
+        let gameExists = await isExistingGame(gameId);
+        console.log('gameExists: ', gameExists)
+        if (gameExists) {
+          url = `http://localhost:3001/games/${gameId}`;
+          method = 'PUT';
+        } else {
+          url = 'http://localhost:3001/games/'
+          method = 'POST';
+        }
+        
+        let status = await uploadGameState(url, method);
+        console.log('status ', status)
+        if (status === 'success') {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    checkThenUploadGame();
+  }, [players])
 
   const createGame = (name, numPlayers) => {
     let initialPlayers = [
@@ -58,14 +88,6 @@ export default function GameContextProvider(props) {
     };
 
     setGameState(initialState);
-    setIsLoading(true);
-    uploadGameState(initialState)
-      .then(status => {
-        if (status === 'success') {
-          setIsLoading(false);
-        }
-      })
-      .catch((error) => console.log(error));
   };
 
   const setGameState = (game) => {
@@ -86,35 +108,55 @@ export default function GameContextProvider(props) {
 
     const player = game.players.filter(player => player.userId === user.id);
     setRack(player[0].tiles);
-    setPlayers(game.players);
     setTileBag(game.tileBag);
     setTurns(game.turns);
     setGameId(game.id);
+    setGameName(game.name);
+    setPlayers(game.players);
   }
 
-  const uploadGameState = (gameState) => {
-    return new Promise((resolve, reject) => {
-      fetch('http://localhost:3001/games', {
-        method: 'POST',
+  const isExistingGame = async (id) => {
+    try {
+      let res = await fetch('http://localhost:3001/games?id=' + id);
+      if (!res.ok) {
+        throw new Error('Error checking game data')
+      }
+      let data = await res.json();
+      if (data.length > 0) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  const uploadGameState = async (url, method) => {    
+    try {
+      let res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gameState)
-      })
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error('Communication Error');
-          } 
-          resolve('success');
+        body: JSON.stringify({
+          name: gameName,
+          id: gameId,
+          boardTiles: getPlacedTiles(board),
+          tileBag,
+          turns,
+          players
         })
-        .catch((err) => {
-          console.log(err);
-          reject(err);
-        })
-    });
+      });
+
+      if (!res.ok) {
+        throw new Error('Error uploading game state')
+      }
+      return 'success';
+    } catch (error) {
+      throw error;
+    }
   };
 
   const drawTiles = () => {
     console.log('drawTiles');
-    console.log(tileBag);
     let updatedRack = [...rack].filter((square) => square !== null);
     const numTiles = 7 - updatedRack.length;
     updatedRack = updatedRack.concat(tileBag.slice(0, numTiles));

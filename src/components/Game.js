@@ -9,7 +9,6 @@ import { GameContext } from '../contexts/GameContext';
 export default function Game() {
   const {
     isLoading,
-    gameId,
     tileBag,
     turns,
     rack,
