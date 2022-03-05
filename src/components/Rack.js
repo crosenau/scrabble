@@ -1,19 +1,22 @@
 import { useContext } from 'react';
 import { GameContext } from '../contexts/GameContext';
+import { UserContext } from '../contexts/UserContext';
 import Tile from './Tile';
 
 export default function Rack() {
-  const { rack, grabTileFromRack, placeTileOnRack } = useContext(GameContext);
-  const displayedTiles = [...rack];
+  const { players, turns, grabTileFromRack, placeTileOnRack } = useContext(GameContext);
+  const { user } = useContext(UserContext);
+  const tiles = players.filter(player => player.userId === user.id)[0].tiles;
   const maxTiles = 7;
 
-  while (displayedTiles.length < maxTiles) {
-    displayedTiles.push(null);
+  while (tiles.length < maxTiles) {
+    console.log('Rack: filling in blank tiles');
+    tiles.push(null);
   }
 
   return (
     <div className="rack">
-      {displayedTiles.map((tile, i) => {
+      {tiles.map((tile, i) => {
         return tile ? (
           <Tile 
             tile={tile}

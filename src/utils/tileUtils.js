@@ -1,3 +1,4 @@
+import { remove } from "lodash";
 const { floor, random } = Math; 
 
 const createTile = (
@@ -94,4 +95,15 @@ const getAllTiles = () => {
   return letters;
 }
 
-export { createTileBag, createTestBag, getAllTiles };
+const drawTiles = (tileBag, rack) => {
+  console.log('drawTiles')
+  const maxTiles = 7;
+  let newRack = rack.filter(tile => tile !== null);
+  
+  const numTiles = maxTiles - newRack.length;
+  newRack = newRack.concat(tileBag.slice(0, numTiles));
+
+  return [tileBag.slice(numTiles), newRack]
+};
+
+export { createTileBag, createTestBag, getAllTiles, drawTiles };

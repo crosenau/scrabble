@@ -20,12 +20,12 @@ export default function Game() {
     playWord
   } = useContext(GameContext);
 
-  useEffect(() => {
-    if (rack.length === 0 && turns < players.length) {
-      console.log('ready, drawing tiles')
-      drawTiles();
-    }
-  }, [tileBag])
+  // useEffect(() => {
+  //   if (rack.length === 0 && turns < players.length) {
+  //     console.log('ready, drawing tiles')
+  //     drawTiles();
+  //   }
+  // }, [tileBag])
 
   const isReady = tileBag !== null && !isLoading;
   
@@ -44,7 +44,7 @@ export default function Game() {
         <div id="controls">
           <div id="button-container-1">
             <button type="button" onClick={() => playWord()}>Play</button>
-            <button type="button" onClick={() => drawTiles()}>Trade</button>
+            <button type="button" onClick={null}>Trade</button>
           </div>
           <Rack />
           <div id="button-container-2">

@@ -5,14 +5,13 @@ import {
   createEmptyBoard,
   isValidPlacement,
   getPlayableWords,
-  editBoardByFilter,
-  editBoardByIndices,
   getPlacedTiles,
   addTilesToBoard
 } from '../utils/boardUtils';
-import { createTileBag, createTestBag } from '../utils/tileUtils';
+import { createTileBag, createTestBag, drawTiles } from '../utils/tileUtils';
 import { isWord } from '../utils/dictionary';
 import { v4 as uuidv4 } from 'uuid';
+import { cloneDeep } from 'lodash';
 
 export const GameContext = createContext();
 
@@ -20,19 +19,22 @@ export default function GameContextProvider(props) {
   const { user } = useContext(UserContext);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [grabbedTile, setGrabbedTile] = useState(null);
+  const [letterSelectVisible, setLetterSelectVisible] = useState(false);
+  const [uploadReady, setUploadReady] = useState(false);
   const [gameId, setGameId] = useState(null);
   const [gameName, setGameName] = useState(null);
   const [board, setBoard] = useState(null);
   const [tileBag, setTileBag] = useState(null);
-  const [rack, setRack] = useState([]);
-  const [grabbedTile, setGrabbedTile] = useState(null);
-  const [letterSelectVisible, setLetterSelectVisible] = useState(false);
   const [turns, setTurns] = useState(0);
   const [players, setPlayers] = useState([]);
 
+  const playerIndex = turns % players.length;
+
   useEffect(() => {
+    console.log('useEffect')
+    if (!uploadReady) return;
     async function checkThenUploadGame() {
-      if (gameId === null) return;
       setIsLoading(true);
       let url, method;
 
@@ -47,7 +49,7 @@ export default function GameContextProvider(props) {
           method = 'POST';
         }
         
-        let status = await uploadGameState(url, method);
+        let status = await uploadGame(url, method);
         console.log('status ', status)
         if (status === 'success') {
           setIsLoading(false);
@@ -57,23 +59,25 @@ export default function GameContextProvider(props) {
       }
     }
     checkThenUploadGame();
-  }, [players])
+    setUploadReady(false);
+  }, [uploadReady])
 
   const createGame = (name, numPlayers) => {
-    let initialPlayers = [
+    let tileBag = createTileBag();
+    let players = [
       {
         userId: user.id,
         userName: user.name,
-        tiles: [],
+        tiles: tileBag.splice(0, 7),
         score: 0
       }
     ]
 
     for (let x = 1; x < numPlayers; x++) {
-      initialPlayers.push({
+      players.push({
         userId: null,
-        userName: 'Waiting for player',
-        tiles: [],
+        userName: '[Empty]',
+        tiles: tileBag.splice(0, 7),
         score: 0
       });
     }
@@ -82,37 +86,41 @@ export default function GameContextProvider(props) {
       name,
       id: uuidv4(),
       boardTiles: getPlacedTiles(createEmptyBoard()),
-      tileBag: createTileBag(),
+      tileBag,
       turns: 0,
-      players: initialPlayers
+      players
     };
 
     setGameState(initialState);
   };
 
   const setGameState = (game) => {
-    if (!game.players.some((player) => player.userId === user.id)) {
-      const insertIndex = game.players.findIndex((player) => player.userId === null);
+    if (!game.players.some(player => player.userId === user.id)) {
+      const insertIndex = game.players.findIndex(player => player.userId === null);
       if (insertIndex === -1) {
         throw new Error('Game is full');
       }
       game.players[insertIndex] = {
+        ...game.players[insertIndex],
         userId: user.id,
         userName: user.name,
-        tiles: [],
-        score: 0
       }
-    } 
-    const updatedBoard = addTilesToBoard(game.boardTiles, createEmptyBoard());
-    setBoard(updatedBoard);
+    }
+    console.log(game)
+    const newBoard = addTilesToBoard(game.boardTiles, createEmptyBoard());
+    setBoard(newBoard);
 
     const player = game.players.filter(player => player.userId === user.id);
-    setRack(player[0].tiles);
+    console.log('thisPlayer: ', player);
     setTileBag(game.tileBag);
     setTurns(game.turns);
     setGameId(game.id);
     setGameName(game.name);
     setPlayers(game.players);
+    if (game.turns < game.players.length) {
+      setUploadReady(true);
+      // possible race condition here
+    }
   }
 
   const isExistingGame = async (id) => {
@@ -131,7 +139,8 @@ export default function GameContextProvider(props) {
     }
   }
 
-  const uploadGameState = async (url, method) => {    
+  const uploadGame = async (url, method) => {    
+    console.log('-----uploadGame-----');
     try {
       let res = await fetch(url, {
         method,
@@ -155,112 +164,141 @@ export default function GameContextProvider(props) {
     }
   };
 
-  const drawTiles = () => {
-    console.log('drawTiles');
-    let updatedRack = [...rack].filter((square) => square !== null);
-    const numTiles = 7 - updatedRack.length;
-    updatedRack = updatedRack.concat(tileBag.slice(0, numTiles));
-    setRack(updatedRack);
-    setTileBag([...tileBag].slice(numTiles));
-  };
-
   const moveGrabbedTile = (event) => {
     if (!grabbedTile) return;
-    const updatedGrabbedTile = { ...grabbedTile };
-    updatedGrabbedTile.dragPosX = `${event.clientX - 20}px`;
-    updatedGrabbedTile.dragPosY = `${event.clientY - 20}px`;
-    setGrabbedTile(updatedGrabbedTile);
+    const newGrabbedTile = { ...grabbedTile };
+    newGrabbedTile.dragPosX = `${event.clientX - 20}px`;
+    newGrabbedTile.dragPosY = `${event.clientY - 20}px`;
+    setGrabbedTile(newGrabbedTile);
   };
 
   const selectLetter = (letter) => {
-    const updatedboard = board;
+    const newboard = board;
     
-    updatedboard.forEach((row) => {
-      row.forEach((square) => {
+    newboard.forEach(row => {
+      row.forEach(square => {
         if (square.tile && square.tile.letter === null) {
           square.tile.letter = letter;
         }
       });
     });
 
-    setBoard(updatedboard);
+    setBoard(newboard);
     setLetterSelectVisible(false);
   };
 
   const playWord = () => {
-    let updatedBoard = JSON.parse(JSON.stringify(board));
+    let newBoard = cloneDeep(board);
     if (!isValidPlacement(board)) {
       alert('Invalid Move');
-      editBoardByFilter(
-        updatedBoard,
-        (square) => square.tile && !square.tile.played,
-        (square) => square.tile.className = 'tile-invalid'
-      );
-      setBoard(updatedBoard);
+      newBoard = newBoard.map(row => {
+        return row.map(square => {
+          if (square.tile && !square.tile.played) {
+            square.tile.className = 'tile-invalid';
+          }
+          return square;
+        });
+      })
+      setBoard(newBoard);
       return;
     }
 
     const playedWords = getPlayableWords(board);
     if (playedWords.length === 0) {
       alert('no played words');
-      editBoardByFilter(
-        updatedBoard,
-        (square) => square.tile && !square.tile.played,
-        (square) => square.tile.className = 'tile-invalid'
-      );
-      setBoard(updatedBoard);
+      newBoard = newBoard.map(row => {
+        return row.map(square => {
+          if (square.tile && !square.tile.played) {
+            square.tile.className = 'tile-invalid';
+          }
+          return square;
+        });
+      })
+      setBoard(newBoard);
       return;
     }
 
-    playedWords.forEach((word) => {
-      let text = '';
-      word.forEach((square) => {
-        text += square.tile.letter;
-      });
-      const indices = word.map(square => square.index);
-      console.log(isWord(text));
-      if (isWord(text) === false) {
-        alert(`${text} is not a valid word`);
-        editBoardByFilter(
-          updatedBoard,
-          (square) => square.tile && indices.includes(square.index),
-          (square) => square.tile.className = 'tile-invalid'
-        );
-        setBoard(updatedBoard);
-        return;
-      } else {
-        let updatedPlayers = JSON.parse(JSON.stringify(players));
-        const score = scoreWord(word);
-        editBoardByIndices(
-          updatedBoard, 
-          indices, 
-          (square) => square.tile.className = 'tile-scored'
-        );
-        editBoardByIndices(
-          updatedBoard,
-          indices[indices.length-1],
-          (square) => square.tile.totalPoints = score
-        )
-        setBoard(updatedBoard);
-        console.log(`${text} played for ${score} points.`);
-        updatedPlayers[0].score += score;
-        setPlayers(updatedPlayers);
-        console.log(players);
+    const invalidWords = playedWords.reduce((prevWord, word) => {
+      const text = word.map(square => square.tile.letter).join('');
+      console.log(prevWord);
+      console.log('isWord ', text, isWord(text));
+      if (!isWord(text)) {
+        return [...prevWord, word]
       }
+      return prevWord;
+    }, [])
+
+    console.log('invalidWords: ', invalidWords);
+
+    if (invalidWords.length > 0) {
+      invalidWords.forEach(word => {
+        const text = word.map(square => square.tile.letter).join('');
+        const indices = word.map(square => square.index);
+        alert(`${text} is not a valid word`);
+        newBoard = newBoard.map(row => {
+          return row.map(square => {
+            if (square.tile && indices.includes(square.index)) {
+              square.tile.className = 'tile-invalid';
+            }
+            return square;
+          });
+        })
+        setBoard(newBoard);
+      });
+      return;
+    }
+
+    let playerScore = players[playerIndex].score;
+
+    playedWords.forEach(word => {
+      const indices = word.map(square => square.index);
+      const score = scoreWord(word);
+      newBoard = newBoard.map(row => {
+        return row.map(square => {
+          if (square.tile) {
+            if (square.tile.className === 'tile-scored' && !indices.includes(square.index)) {
+              square.tile.className = 'tile-played';
+              square.tile.totalPoints = null;
+            }
+            if (indices.includes(square.index)) {
+              square.tile.className = 'tile-scored';
+              square.tile.played = true;
+              square.tile.totalPoints = square.index === indices[indices.length-1]
+              ? score
+              : square.tile.totalPoints
+            }
+          }
+          return square;
+        });
+      })
+
+      playerScore += score;
     });
+
+    let newPlayers = cloneDeep(players);
+    let newTileBag = [...tileBag];
+    newPlayers[playerIndex].score = playerScore;
+    [newTileBag, newPlayers[playerIndex].tiles] = 
+      drawTiles(newTileBag, newPlayers[playerIndex].tiles);
+
+    setBoard(newBoard);
+    setPlayers(newPlayers);
+    setTurns(turns + 1);
+    setTileBag(newTileBag);
+    setUploadReady(true);
   };
 
   const scoreWord = (word) => {
     let wordScoreMod = 1;
     let score = 0;
     let playedTiles = 0;
-    word.forEach((square) => {
-      if (square.letterScoreMod) {
+    word.forEach(square => {
+      if (square.letterScoreMod && !square.tile.played) {
         score += (square.tile.points * square.letterScoreMod);
       } else {
         score += square.tile.points;
       }
-      if (square.wordScoreMod) {
+      if (square.wordScoreMod && !square.tile.played) {
         wordScoreMod = square.wordScoreMod;
       }
       if (!square.tile.played) {
@@ -275,9 +313,10 @@ export default function GameContextProvider(props) {
 
   const grabTileFromRack = (event, tile, index) => {
     if (grabbedTile !== null) return;
-    let updatedrack = [...rack];
-    updatedrack[index] = null;
-    setRack(updatedrack);
+    let newPlayers = cloneDeep(players);
+    let rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    rack[index] = null;
+    setPlayers(newPlayers);
     setGrabbedTile({
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
@@ -289,27 +328,36 @@ export default function GameContextProvider(props) {
 
   const placeTileOnRack = (index) => {
     if (grabbedTile === null) return;
-    let updatedrack = [...rack];
-    updatedrack[index] = {
+    let newPlayers = cloneDeep(players);
+    let rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    rack[index] = {
       ...grabbedTile,
       className: 'tile'
     };
-    setRack(updatedrack);
+    setPlayers(newPlayers);
     setGrabbedTile(null);
   }
 
   const grabTileFromBoard = (event, tile, index) => {
-    if (grabbedTile !== null) return;
-    let updatedBoard = JSON.parse(JSON.stringify(board));
-    editBoardByFilter(
-      updatedBoard,
-      (square) => square.tile && !square.tile.played,
-      (square) => square.tile.className = 'tile'
-    )
+    if (
+      grabbedTile !== null 
+      || tile.played === true
+      || players[playerIndex].userId !== user.id
+    ) return;
+    const newBoard = cloneDeep(board).map(row => {
+      return row.map(square => {
+        if (square.tile && square.tile.className === 'tile-invalid') {
+          square.tile.className = square.tile.played 
+            ? 'tile-played'
+            : 'tile'
+        }
+        return square;
+      });
+    })
 
     const pos2d = get2dPos(index);
-    updatedBoard[pos2d[0]][pos2d[1]].tile = null;
-    setBoard(updatedBoard);
+    newBoard[pos2d[0]][pos2d[1]].tile = null;
+    setBoard(newBoard);
     setGrabbedTile({
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
@@ -321,20 +369,25 @@ export default function GameContextProvider(props) {
   }
 
   const placeTileOnBoard = (index) => {
-    if (grabbedTile === null) return;
-    let updatedBoard = JSON.parse(JSON.stringify(board));
+    if (grabbedTile === null || players[playerIndex].userId !== user.id) return;
+    let newBoard = cloneDeep(board);
     const pos2d = get2dPos(index);
-    updatedBoard[pos2d[0]][pos2d[1]].tile = {
+    newBoard[pos2d[0]][pos2d[1]].tile = {
       ...grabbedTile,
       grabbed: false,
       className: 'tile'
     };
-    editBoardByFilter(
-      updatedBoard,
-      (square) => square.tile && !square.tile.played,
-      (square) => square.tile.className = 'tile'
-    )
-    setBoard(updatedBoard);
+    newBoard = newBoard.map(row => {
+      return row.map(square => {
+        if (square.tile && square.tile.className === 'tile-invalid') {
+          square.tile.className = square.tile.played 
+            ? 'tile-played'
+            : 'tile'
+        }
+        return square;
+      });
+    })
+    setBoard(newBoard);
     if (grabbedTile.letter === null) {
       setLetterSelectVisible(true);
     }
@@ -347,7 +400,6 @@ export default function GameContextProvider(props) {
       isLoading,
       gameId,
       board,
-      rack,
       tileBag,
       grabbedTile,
       letterSelectVisible,
@@ -359,7 +411,6 @@ export default function GameContextProvider(props) {
       placeTileOnRack,
       grabTileFromBoard,
       placeTileOnBoard,
-      drawTiles,
       moveGrabbedTile,
       selectLetter,
       playWord,

@@ -1,4 +1,5 @@
-const { floor } = Math; 
+import { findLastIndex } from 'lodash'
+const { floor, min } = Math; 
 
 const createSquare = ({ className, text, letterScoreMod, wordScoreMod, index }) => {
   return {
@@ -117,31 +118,37 @@ const isValidPlacement = (board) => {
     console.log('Center square is not filled');
     return false;
   }
-  let playedTileIndices = [];
-  board.forEach((row) => {
-    row.forEach((square) => {
-      if (square.tile && !square.tile.played) {
-        playedTileIndices.push(square.index);
-      }
-    });
-  });
-  const validGaps = [1, boardSize];
-  let previousGap = null;
-  for (let x = 1; x < playedTileIndices.length; x += 1) {
-    if (!previousGap) {
-      if (!validGaps.includes(playedTileIndices[x] - playedTileIndices[x-1])) {
-        console.log('initial difference invalid');
-        return false;
-      }
-    } else if (
-      previousGap
-      && playedTileIndices[x] - playedTileIndices[x - 1] !== previousGap
-    ) {
-      console.log('mismatched differences');
-      return false;
+  const rowsWithNewTiles = board.reduce((allRows, row) => {
+    if (row.some(square => square.tile !== null && !square.tile.played)) {
+      return [...allRows, row]
     }
-    previousGap = playedTileIndices[x] - playedTileIndices[x - 1];
+    return allRows;
+  }, []);
+  const transposedBoard = board[0].map((_, colIndex) => (
+    board.map(row => row[colIndex])));
+  const colsWithNewTiles = transposedBoard.reduce((allCols, col) => {
+    if (col.some(square => square.tile !== null && !square.tile.played)) {
+      return [...allCols, col]
+    }
+    return allCols;
+  }, []);
+
+  if (min(rowsWithNewTiles.length, colsWithNewTiles.length) > 1) {
+    console.log('pieces must be placed in a single line');
+    return false;
   }
+  
+  const largestLine = rowsWithNewTiles.length > colsWithNewTiles.length ?
+    colsWithNewTiles[0]: rowsWithNewTiles[0];
+  const start = largestLine.findIndex(square => square.tile && !square.tile.played);
+  const end = findLastIndex(largestLine, (square) => square.tile && !square.tile.played);
+
+  if (largestLine.slice(start, end).some(square => !square.tile)) {
+    console.log('pieces must be placed to form a single word');
+    return false;
+  }
+
+  console.log('valid move');
   return true;
 };
 
@@ -157,7 +164,7 @@ const getPlayableWords = (board) => {
     let potentialWord = [];
     let containsUnplayedTile = false;
 
-    line.forEach((square) => {
+    line.forEach((square, i) => {
       if (square.tile === null) {
         if (potentialWord.length > 1 && containsUnplayedTile) {
           words.push(potentialWord);
@@ -170,20 +177,27 @@ const getPlayableWords = (board) => {
         }
         potentialWord.push(square);
       }
+      if (
+        i === boardSize - 1 
+        && potentialWord.length > 1 
+        && containsUnplayedTile
+      ) {
+          words.push(potentialWord);
+      }
     });
     return words;
   };
 
   let playableWords = [];
-  board.forEach((row) => {
+  board.forEach(row => {
     const words = extractPlayedWords(row);
     if (words.length > 0) {
       playableWords.push(words.flat());
     }
   });
   const transposedBoard = board[0].map((_, colIndex) => (
-    board.map((row) => row[colIndex])));
-  transposedBoard.forEach((row) => {
+    board.map(row => row[colIndex])));
+  transposedBoard.forEach(row => {
     const words = extractPlayedWords(row);
     if (words.length > 0) {
       playableWords.push(words.flat());
@@ -234,21 +248,21 @@ const editBoardByIndices = (board, indices, edit) => {
 }
 
 const getPlacedTiles = (board) => {
-  const tiles = board.flat().map((square) => {
+  const squares = board.flat().map(square => {
     if (square.tile) {
-      return square.tile;
+      return { tile: square.tile, index: square.index };
     }
 
     return null;
-  }).filter((tile) => tile !== null);
+  }).filter(square => square !== null);
 
-  return tiles;
+  return squares;
 }
 
-const addTilesToBoard = (tiles, board) => {
-  for (let tile of tiles) {
-    const [row, col] = get2dPos(tile.index);
-    board[row][col].tile = tile;
+const addTilesToBoard = (squares, board) => {
+  for (let square of squares) {
+    const [row, col] = get2dPos(square.index);
+    board[row][col].tile = square.tile;
   }
 
   return board;

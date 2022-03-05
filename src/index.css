@@ -205,6 +205,20 @@ body {
   background-color: #9fd67f;
 }
 
+.tile-played {
+  user-select: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  align-items: center;
+  justify-content: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 6px;
+  margin: var(--tile-margin);
+  background-color: #bb8b6f;
+}
+
 .tile-letter {
   font-size: calc(var(--tile-size) / 2.5);
   color: black;
