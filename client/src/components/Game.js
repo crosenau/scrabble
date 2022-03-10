@@ -8,26 +8,14 @@ import { GameContext } from '../contexts/GameContext';
 
 export default function Game() {
   const {
-    isLoading,
     tileBag,
-    turns,
-    rack,
-    players,
     grabbedTile,
     letterSelectVisible,
-    drawTiles,
     moveGrabbedTile,
     playWord
   } = useContext(GameContext);
 
-  // useEffect(() => {
-  //   if (rack.length === 0 && turns < players.length) {
-  //     console.log('ready, drawing tiles')
-  //     drawTiles();
-  //   }
-  // }, [tileBag])
-
-  const isReady = tileBag !== null && !isLoading;
+  const isReady = tileBag !== null;
   
   if (!isReady) {
     console.log('not ready')

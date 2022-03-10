@@ -10,57 +10,75 @@ import {
 } from '../utils/boardUtils';
 import { createTileBag, createTestBag, drawTiles } from '../utils/tileUtils';
 import { isWord } from '../utils/dictionary';
+import { NEW_GAME, UPDATE_GAME, JOIN_GAME } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep } from 'lodash';
+import { io } from 'socket.io-client';
 
 export const GameContext = createContext();
 
 export default function GameContextProvider(props) {
   const { user } = useContext(UserContext);
 
-  const [isLoading, setIsLoading] = useState(false);
   const [grabbedTile, setGrabbedTile] = useState(null);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
-  const [uploadReady, setUploadReady] = useState(false);
   const [gameId, setGameId] = useState(null);
   const [gameName, setGameName] = useState(null);
   const [board, setBoard] = useState(null);
   const [tileBag, setTileBag] = useState(null);
   const [turns, setTurns] = useState(0);
   const [players, setPlayers] = useState([]);
-
+  const [socket, setSocket] = useState(null);
+  const [uploadType, setUploadType] = useState(null);
+  const [roomId, setRoomId] = useState(null);
+  
   const playerIndex = turns % players.length;
 
   useEffect(() => {
-    console.log('useEffect')
-    if (!uploadReady) return;
-    async function checkThenUploadGame() {
-      setIsLoading(true);
-      let url, method;
+    console.log('useEffect - socket');
+    const newSocket = io('http://localhost:3001');
 
-      try {
-        let gameExists = await isExistingGame(gameId);
-        console.log('gameExists: ', gameExists)
-        if (gameExists) {
-          url = `http://localhost:3001/games/${gameId}`;
-          method = 'PUT';
-        } else {
-          url = 'http://localhost:3001/games/'
-          method = 'POST';
+    newSocket.on('gameState', (data) => {
+      console.log('socketData: ', data);
+      setGameState(data, false);
+
+    })
+    setSocket(newSocket);
+    return () => newSocket.close();
+  }, []);
+
+  useEffect(() => {
+    console.log('useEffect - uploadType');
+    if (!uploadType) return;
+
+    const gameState = {
+      name: gameName,
+      id: gameId,
+      boardTiles: getPlacedTiles(board),
+      tileBag,
+      turns,
+      players
+    };
+
+    try {
+      socket.emit(uploadType, { gameState }, (ack) => {
+        if (!ack.success) {
+          throw new Error('Error setting gameState');
         }
-        
-        let status = await uploadGame(url, method);
-        console.log('status ', status)
-        if (status === 'success') {
-          setIsLoading(false);
+        if (roomId !== gameId) {
+          socket.emit(JOIN_GAME, { gameId }, (ack) => {
+            if (!ack.success) {
+              throw new Error('Error joining room');
+            }
+            setRoomId(ack.roomId);
+          });
         }
-      } catch (error) {
-        console.log(error);
-      }
+        setUploadType(null);
+      })
+    } catch(error) {
+      console.log(error);
     }
-    checkThenUploadGame();
-    setUploadReady(false);
-  }, [uploadReady])
+  }, [uploadType]);
 
   const createGame = (name, numPlayers) => {
     let tileBag = createTileBag();
@@ -91,78 +109,40 @@ export default function GameContextProvider(props) {
       players
     };
 
-    setGameState(initialState);
+    setGameState(initialState, NEW_GAME);
   };
 
-  const setGameState = (game) => {
-    if (!game.players.some(player => player.userId === user.id)) {
-      const insertIndex = game.players.findIndex(player => player.userId === null);
-      if (insertIndex === -1) {
-        throw new Error('Game is full');
+  const setGameState = (game, nextAction = null) => {
+    console.log('setGameState');
+    try {
+      if (!game.players.some(player => player.userId === user.id)) {
+        const insertIndex = game.players.findIndex(player => player.userId === null);
+        if (insertIndex === -1) {
+          throw new Error('Game is full');
+        }
+        game.players[insertIndex] = {
+          ...game.players[insertIndex],
+          userId: user.id,
+          userName: user.name,
+        }
       }
-      game.players[insertIndex] = {
-        ...game.players[insertIndex],
-        userId: user.id,
-        userName: user.name,
+      const newBoard = addTilesToBoard(game.boardTiles, createEmptyBoard());
+      setBoard(newBoard);
+  
+      const player = game.players.filter(player => player.userId === user.id);
+      console.log('thisPlayer: ', player);
+      setTileBag(game.tileBag);
+      setTurns(game.turns);
+      setGameId(game.id);
+      setGameName(game.name);
+      setPlayers(game.players);
+      if (nextAction) {
+        setUploadType(nextAction);
       }
-    }
-    console.log(game)
-    const newBoard = addTilesToBoard(game.boardTiles, createEmptyBoard());
-    setBoard(newBoard);
-
-    const player = game.players.filter(player => player.userId === user.id);
-    console.log('thisPlayer: ', player);
-    setTileBag(game.tileBag);
-    setTurns(game.turns);
-    setGameId(game.id);
-    setGameName(game.name);
-    setPlayers(game.players);
-    if (game.turns < game.players.length) {
-      setUploadReady(true);
-      // possible race condition here
+    } catch(error) {
+      console.log(error);
     }
   }
-
-  const isExistingGame = async (id) => {
-    try {
-      let res = await fetch('http://localhost:3001/games?id=' + id);
-      if (!res.ok) {
-        throw new Error('Error checking game data')
-      }
-      let data = await res.json();
-      if (data.length > 0) {
-        return true;
-      }
-      return false;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  const uploadGame = async (url, method) => {    
-    console.log('-----uploadGame-----');
-    try {
-      let res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: gameName,
-          id: gameId,
-          boardTiles: getPlacedTiles(board),
-          tileBag,
-          turns,
-          players
-        })
-      });
-
-      if (!res.ok) {
-        throw new Error('Error uploading game state')
-      }
-      return 'success';
-    } catch (error) {
-      throw error;
-    }
-  };
 
   const moveGrabbedTile = (event) => {
     if (!grabbedTile) return;
@@ -285,7 +265,7 @@ export default function GameContextProvider(props) {
     setPlayers(newPlayers);
     setTurns(turns + 1);
     setTileBag(newTileBag);
-    setUploadReady(true);
+    setUploadType(UPDATE_GAME);
   };
 
   const scoreWord = (word) => {
@@ -397,7 +377,6 @@ export default function GameContextProvider(props) {
 
   return (
     <GameContext.Provider value ={{
-      isLoading,
       gameId,
       board,
       tileBag,
