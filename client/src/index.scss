@@ -166,9 +166,19 @@ body {
   background-color: #9fd67f;
 }
 
+.tile-scored {
+  @include tile;
+  background-color: #9fd67f;
+}
+
 .tile-played {
   @include tile;
   background-color: #bb8b6f;
+}
+
+.tile-selected {
+  @include tile;
+  background-color: #fff1b0;
 }
 
 .tile-letter {

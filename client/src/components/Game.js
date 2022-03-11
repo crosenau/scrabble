@@ -1,4 +1,4 @@
-import { useEffect, useContext } from 'react';
+import { useContext } from 'react';
 import Board from './Board';
 import Rack from './Rack';
 import Tile from './Tile';
@@ -11,8 +11,14 @@ export default function Game() {
     tileBag,
     grabbedTile,
     letterSelectVisible,
+    isTradingTiles,
     moveGrabbedTile,
-    playWord
+    playWord,
+    skipTurn,
+    recallTiles,
+    shuffleTiles,
+    toggleIsTradingTiles,
+    tradeSelectedTiles
   } = useContext(GameContext);
 
   const isReady = tileBag !== null;
@@ -31,13 +37,19 @@ export default function Game() {
         <Board />
         <div id="controls">
           <div id="button-container-1">
-            <button type="button" onClick={() => playWord()}>Play</button>
-            <button type="button" onClick={null}>Trade</button>
+            <button type="button" onClick={playWord}>Play</button>
+            { isTradingTiles
+              ? <button type="button" onClick={tradeSelectedTiles}>Confirm</button>
+              : <button type="button" onClick={toggleIsTradingTiles}>Trade</button>
+            }
+
+            <button type="button" onClick={skipTurn}>Skip</button>
           </div>
           <Rack />
           <div id="button-container-2">
-            <button type="button" onClick={null}>Shuffle</button>
-            <button type="button" onClick={null}>Skip</button>
+            <button type="button" onClick={shuffleTiles}>Shuffle</button>
+            <button type="button" onClick={recallTiles}>Recall</button>
+
           </div>
         </div>
       </div>

@@ -205,6 +205,20 @@ body {
   background-color: #9fd67f;
 }
 
+.tile-scored {
+  user-select: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  align-items: center;
+  justify-content: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 6px;
+  margin: var(--tile-margin);
+  background-color: #9fd67f;
+}
+
 .tile-played {
   user-select: none;
   display: grid;
@@ -217,6 +231,20 @@ body {
   border-radius: 6px;
   margin: var(--tile-margin);
   background-color: #bb8b6f;
+}
+
+.tile-selected {
+  user-select: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  align-items: center;
+  justify-content: center;
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: 6px;
+  margin: var(--tile-margin);
+  background-color: #fff1b0;
 }
 
 .tile-letter {

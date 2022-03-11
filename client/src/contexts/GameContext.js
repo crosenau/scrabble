@@ -6,13 +6,15 @@ import {
   isValidPlacement,
   getPlayableWords,
   getPlacedTiles,
-  addTilesToBoard
-} from '../utils/boardUtils';
-import { createTileBag, createTestBag, drawTiles } from '../utils/tileUtils';
+  addTilesToBoard,
+  createTileBag,
+  drawTiles,
+  recallTilesFromBoard
+} from '../utils/gameUtils';
 import { isWord } from '../utils/dictionary';
 import { NEW_GAME, UPDATE_GAME, JOIN_GAME } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
-import { cloneDeep } from 'lodash';
+import { clone, cloneDeep, shuffle } from 'lodash';
 import { io } from 'socket.io-client';
 
 export const GameContext = createContext();
@@ -22,6 +24,7 @@ export default function GameContextProvider(props) {
 
   const [grabbedTile, setGrabbedTile] = useState(null);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
+  const [isTradingTiles, setIsTradingTiles] = useState(false);
   const [gameId, setGameId] = useState(null);
   const [gameName, setGameName] = useState(null);
   const [board, setBoard] = useState(null);
@@ -130,12 +133,13 @@ export default function GameContextProvider(props) {
       setBoard(newBoard);
   
       const player = game.players.filter(player => player.userId === user.id);
-      console.log('thisPlayer: ', player);
       setTileBag(game.tileBag);
       setTurns(game.turns);
       setGameId(game.id);
       setGameName(game.name);
       setPlayers(game.players);
+      setLetterSelectVisible(false);
+      setIsTradingTiles(false);
       if (nextAction) {
         setUploadType(nextAction);
       }
@@ -208,8 +212,6 @@ export default function GameContextProvider(props) {
       return prevWord;
     }, [])
 
-    console.log('invalidWords: ', invalidWords);
-
     if (invalidWords.length > 0) {
       invalidWords.forEach(word => {
         const text = word.map(square => square.tile.letter).join('');
@@ -258,8 +260,7 @@ export default function GameContextProvider(props) {
     let newPlayers = cloneDeep(players);
     let newTileBag = [...tileBag];
     newPlayers[playerIndex].score = playerScore;
-    [newTileBag, newPlayers[playerIndex].tiles] = 
-      drawTiles(newTileBag, newPlayers[playerIndex].tiles);
+    drawTiles(newTileBag, newPlayers[playerIndex].tiles);
 
     setBoard(newBoard);
     setPlayers(newPlayers);
@@ -375,6 +376,86 @@ export default function GameContextProvider(props) {
     setGrabbedTile(null);
   }
 
+  const selectTile = (e, tile, index) => {
+    const newPlayers = cloneDeep(players);
+    const tiles = newPlayers[playerIndex].tiles;
+    tiles[index].className = tile.className === 'tile-selected'
+      ? 'tile'
+      : 'tile-selected'
+
+    setPlayers(newPlayers);
+  }
+
+  const recallTiles = () => {
+    if (players[playerIndex].userId !== user.id) return;
+    
+    const newBoard = cloneDeep(board);
+    const newPlayers = cloneDeep(players);
+    const playerTiles = newPlayers[playerIndex].tiles;
+
+    recallTilesFromBoard(newBoard, playerTiles);
+    playerTiles.forEach(tile => tile.className = 'tile');
+    setBoard(newBoard);
+    setPlayers(newPlayers);
+  }
+
+  const skipTurn = () => {
+    if (players[playerIndex].userId !== user.id) return;
+
+    const newBoard = cloneDeep(board);
+    const newPlayers = cloneDeep(players);
+    const playerTiles = newPlayers[playerIndex].tiles;
+
+    recallTilesFromBoard(newBoard, playerTiles);
+    playerTiles.forEach(tile => tile.className = 'tile');
+    setBoard(newBoard);
+    setPlayers(newPlayers);
+    setTurns(turns + 1);
+    setUploadType(UPDATE_GAME);
+  }
+
+  const shuffleTiles = () => {
+    const shuffleIndex = players.findIndex(player => player.userId === user.id);
+    const newPlayers = cloneDeep(players);
+    newPlayers[shuffleIndex].tiles = shuffle(newPlayers[shuffleIndex].tiles);
+
+    setPlayers(newPlayers);
+  }
+
+  const toggleIsTradingTiles = () => {
+    if (players[playerIndex].userId !== user.id) return;
+
+    const newBoard = cloneDeep(board);
+    const newPlayers = cloneDeep(players);
+    const playerTiles = newPlayers[playerIndex].tiles;
+
+    recallTilesFromBoard(newBoard, playerTiles);
+    playerTiles.forEach(tile => tile.className = 'tile');
+    setBoard(newBoard);
+    setPlayers(newPlayers);
+    setIsTradingTiles(!isTradingTiles);
+  }
+
+  const tradeSelectedTiles = () => {
+    const newTileBag = cloneDeep(tileBag);
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers[playerIndex].tiles;
+
+    rack.forEach((tile, i) => {
+      if (tile.className === 'tile-selected') {
+        tile.className = 'tile';
+        newTileBag.push(tile);
+        rack[i] = newTileBag.splice(0, 1)[0];
+      }
+    });
+
+    setTileBag(newTileBag);
+    setPlayers(newPlayers);
+    setIsTradingTiles(!isTradingTiles);
+    setTurns(turns + 1)
+    setUploadType(UPDATE_GAME);
+  }
+
   return (
     <GameContext.Provider value ={{
       gameId,
@@ -382,6 +463,7 @@ export default function GameContextProvider(props) {
       tileBag,
       grabbedTile,
       letterSelectVisible,
+      isTradingTiles,
       players,
       turns,
       setGameState,
@@ -393,6 +475,12 @@ export default function GameContextProvider(props) {
       moveGrabbedTile,
       selectLetter,
       playWord,
+      skipTurn,
+      recallTiles,
+      shuffleTiles,
+      toggleIsTradingTiles,
+      tradeSelectedTiles,
+      selectTile
     }}>
       {props.children}
     </GameContext.Provider>
