@@ -1,7 +1,7 @@
 import { useContext } from 'react';
 import Tile from './Tile.js';
-import { getAllTiles } from '../utils/gameUtils.js';
-import { GameContext } from '../contexts/GameContext.js';
+import { getAllTiles } from '../../utils/gameUtils.js';
+import { GameContext } from '../../contexts/GameContext.js';
 
 export default function LetterSelection() {
   const { selectLetter } = useContext(GameContext);
@@ -13,7 +13,7 @@ export default function LetterSelection() {
         {allTiles.map((tile, i) => (
           <Tile
             tile={tile}
-            clickHandler={() => selectLetter(tile.letter)}
+            handleMouseDown={() => selectLetter(tile.letter)}
             key={i}
           />
         ))}

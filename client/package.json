@@ -19,9 +19,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "sass": "sass --watch sass:css src/index.scss:src/index.css src/components/navigation/navigation.scss:src/components/navigation/navigation.css --no-source-map",
-    "dev": "concurrently \"npm start\" \"npm run sass\""
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": [

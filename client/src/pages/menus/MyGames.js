@@ -1,7 +1,8 @@
 import { useContext } from 'react';
 import { UserContext } from '../../contexts/UserContext';
 import GameList from './GameList';
-import useFetch from '../../utils/useFetch'; 
+import useFetch from '../../utils/useFetch';
+import './menus.scss'
 
 export default function MyGames() {
   const { user } = useContext(UserContext);

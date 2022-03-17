@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
-import { UserContext } from '../contexts/UserContext';
+import { UserContext } from '../../contexts/UserContext';
 import { Navigate } from 'react-router-dom';
+import './menus.scss'
 
 export default function NewPlayer() {
   const { user, createUser } = useContext(UserContext);

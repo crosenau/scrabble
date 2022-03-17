@@ -1,0 +1,43 @@
+#navbar {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  color: white;
+  height: 3rem;
+  background-color: #3498DB;
+  padding: 0 10px;
+}
+
+#logo {
+  user-select: none;
+  font-size: 1.5rem;
+}
+
+#nav-content {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+ul {
+  display: flex;
+  gap: 2rem;
+}
+
+li {
+  list-style: none;
+
+}
+
+.nav-button {
+  cursor: pointer;
+  text-decoration: none;
+  user-select: none;
+  color: white;
+}
+
+.nav-button-selected {
+  background-color: #3db2ff;
+  color: black;
+}

@@ -1,5 +1,6 @@
 import useFetch from '../../utils/useFetch';
 import GameList from './GameList';
+import './menus.scss'
 
 export default function BrowseGames() {
   const { data, isLoading, error } = useFetch('http://localhost:3001/games?players.userId=' + 'null');

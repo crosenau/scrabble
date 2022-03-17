@@ -82,6 +82,19 @@ const createTestBag = () => {
   bag.push(createTile(allTiles[5].letter, allTiles[5].points));
   bag.push(createTile(allTiles[0].letter, allTiles[0].points));
 
+  bag.push(createTile(allTiles[16].letter, allTiles[16].points));
+  bag.push(createTile(allTiles[12].letter, allTiles[12].points));
+  bag.push(createTile(allTiles[1].letter, allTiles[1].points));
+  bag.push(createTile(allTiles[14].letter, allTiles[14].points));
+  bag.push(createTile(allTiles[20].letter, allTiles[20].points));
+  bag.push(createTile(allTiles[5].letter, allTiles[5].points));
+  bag.push(createTile(allTiles[0].letter, allTiles[0].points));
+
+  bag.push(createTile(allTiles[16].letter, allTiles[16].points));
+  bag.push(createTile(allTiles[12].letter, allTiles[12].points));
+  bag.push(createTile(allTiles[1].letter, allTiles[1].points));
+  bag.push(createTile(allTiles[14].letter, allTiles[14].points));
+
   return bag;
 }
 
@@ -123,7 +136,7 @@ const createSquare = ({ className, text, letterScoreMod, wordScoreMod, index }) 
 // Square types
 const normal = (i) => {
   return createSquare({
-    className: 'square',
+    className: 'board__square',
     text: null,
     letterScoreMod: null,
     wordScoreMod: null,
@@ -132,7 +145,7 @@ const normal = (i) => {
 };
 const center = (i) => {
   return createSquare({
-    className: 'square-center',
+    className: 'board__square-center',
     text: null,
     letterScoreMod: null,
     wordScoreMod: 2,
@@ -141,7 +154,7 @@ const center = (i) => {
 };
 const tripleWord = (i) => {
   return createSquare({
-    className: 'square-triple-word',
+    className: 'board__square-triple-word',
     text: 'TW',
     letterScoreMod: null,
     wordScoreMod: 3,
@@ -150,7 +163,7 @@ const tripleWord = (i) => {
 };
 const doubleWord = (i) => {
   return createSquare({
-    className: 'square-double-word',
+    className: 'board__square-double-word',
     text: 'DW',
     letterScoreMod: null,
     wordScoreMod: 2,
@@ -159,7 +172,7 @@ const doubleWord = (i) => {
 };
 const tripleLetter = (i) => {
   return createSquare({
-    className: 'square-triple-letter',
+    className: 'board__square-triple-letter',
     text: 'TL',
     letterScoreMod: 3,
     wordScoreMod: null,
@@ -168,7 +181,7 @@ const tripleLetter = (i) => {
 };
 const doubleLetter = (i) => {
   return createSquare({
-    className: 'square-double-letter',
+    className: 'board__square-double-letter',
     text: 'DL',
     letterScoreMod: 2,
     wordScoreMod: null,
@@ -384,12 +397,24 @@ const addTilesToBoard = (squares, board) => {
 const recallTilesFromBoard = (board, playerTiles) => {
   board.forEach(row => {
     row.forEach(square => {
-      if (square.tile && !square.tile.played) {
-        const insertIndex = playerTiles.indexOf(null);
-        playerTiles[insertIndex] = square.tile;
-        square.tile = null;
+      if (square.tile) {
+        if (square.tile.played && square.tile.className === 'tile--invalid') {
+          square.tile.className = square.tile.played 
+          ? 'tile--played'
+          : 'tile'
+        } else if (!square.tile.played) {
+            const insertIndex = playerTiles.indexOf(null);
+            playerTiles[insertIndex] = square.tile;
+            square.tile = null;
+          }
       }
     })
+  });
+
+  playerTiles.forEach(tile => {
+    if (!tile) return;
+    tile.letter = tile.points === 0 ? '' : tile.letter;
+    tile.className = 'tile'
   });
 }
 

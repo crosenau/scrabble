@@ -2,6 +2,7 @@ import { useContext, useState } from 'react';
 import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import './menus.scss'
 
 export default function Menu() {
   const { createGame } = useContext(GameContext);

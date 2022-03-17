@@ -1,6 +1,6 @@
 import { useContext } from 'react';
-import { GameContext } from '../contexts/GameContext';
-import { UserContext } from '../contexts/UserContext';
+import { GameContext } from '../../contexts/GameContext';
+import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
 
 export default function Rack() {
@@ -27,13 +27,14 @@ export default function Rack() {
           <Tile 
             tile={tile}
             index={i}
-            clickHandler={isTradingTiles ? selectTile : grabTileFromRack}
+            handleMouseDown={isTradingTiles ? selectTile : grabTileFromRack}
+            handleMouseUp={isTradingTiles ? null : placeTileOnRack}
             key={i}
           />
         )
         : <div 
-            className="rack-empty" 
-            onClick={() => placeTileOnRack(i)}
+            className="rack__empty" 
+            onMouseUp={() => placeTileOnRack(i)}
             key={i}
           ></div>
       })}

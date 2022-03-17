@@ -4,7 +4,8 @@ import Rack from './Rack';
 import Tile from './Tile';
 import PlayerList from './PlayerList';
 import LetterSelection from './LetterSelection';
-import { GameContext } from '../contexts/GameContext';
+import { GameContext } from '../../contexts/GameContext';
+import './game.scss';
 
 export default function Game() {
   const {
@@ -13,7 +14,7 @@ export default function Game() {
     letterSelectVisible,
     isTradingTiles,
     moveGrabbedTile,
-    playWord,
+    playWords,
     skipTurn,
     recallTiles,
     shuffleTiles,
@@ -30,14 +31,14 @@ export default function Game() {
   
   return (
     <div className="game" onMouseMove={(e) => moveGrabbedTile(e)}>
-      <div className="players">
+      <div className="game__players">
         <PlayerList />
       </div>
-      <div id="table">
+      <div className="game__interactable">
         <Board />
-        <div id="controls">
-          <div id="button-container-1">
-            <button type="button" onClick={playWord}>Play</button>
+        <div className="controls">
+          <div className="controls__left-buttons">
+            <button type="button" onClick={playWords}>Play</button>
             { isTradingTiles
               ? <button type="button" onClick={tradeSelectedTiles}>Confirm</button>
               : <button type="button" onClick={toggleIsTradingTiles}>Trade</button>
@@ -46,7 +47,7 @@ export default function Game() {
             <button type="button" onClick={skipTurn}>Skip</button>
           </div>
           <Rack />
-          <div id="button-container-2">
+          <div className="controls__right-buttons">
             <button type="button" onClick={shuffleTiles}>Shuffle</button>
             <button type="button" onClick={recallTiles}>Recall</button>
 

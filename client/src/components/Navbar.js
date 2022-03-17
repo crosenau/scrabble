@@ -1,6 +1,7 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { NavLink } from "react-router-dom";
-import { UserContext } from "../../contexts/UserContext";
+import { UserContext } from "../contexts/UserContext";
+import './navbar.scss';
 
 export default function Navbar() {
   const { user } = useContext(UserContext);
@@ -14,7 +15,7 @@ export default function Navbar() {
             <NavLink 
               to="/newgame" 
               className="nav-button" 
-              activeClassName="nav-button-selected" 
+              //activeClassName="nav-button-selected" 
             >
               New Game
             </NavLink>
@@ -23,7 +24,7 @@ export default function Navbar() {
             <NavLink 
               to="/mygames" 
               className="nav-button" 
-              activeClassName="nav-button-selected" 
+              //activeClassName="nav-button-selected" 
             >
               My Games
             </NavLink>
@@ -32,7 +33,7 @@ export default function Navbar() {
             <NavLink 
               to="/browsegames" 
               className="nav-button" 
-              activeClassName="nav-button-selected" 
+              //activeClassName="nav-button-selected" 
             >
               Browse Public Games
             </NavLink>

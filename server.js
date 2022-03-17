@@ -29,7 +29,11 @@ const server = app.listen(PORT, () => {
 })
 
 // socket
-const io = socketIO(server);
+const io = socketIO(server, {
+  cors: {
+    origin: true
+  }
+});
 
 io.on('connection', (socket) => {
   console.log('New socket connection: ', socket.id);
@@ -40,11 +44,12 @@ io.on('connection', (socket) => {
   socket.on('joinGame', (data, callback) => {
     console.log('joined game ', data.gameId);
     for (let room of socket.rooms.values()) {
+      console.log(`leaving room: ${room}`);
       socket.leave(room);
     }
     let gameId = data.gameId;
+    console.log(`joining room: ${gameId}`);
     socket.join(gameId);
-    console.log('rooms: ', socket.rooms);
 
     const gameState = db.get('games').value().filter(game => game.id === gameId)[0];
     socket.to(gameId).emit('gameState', gameState);

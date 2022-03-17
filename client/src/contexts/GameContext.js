@@ -9,12 +9,13 @@ import {
   addTilesToBoard,
   createTileBag,
   drawTiles,
-  recallTilesFromBoard
+  recallTilesFromBoard,
+  createTestBag
 } from '../utils/gameUtils';
 import { isWord } from '../utils/dictionary';
 import { NEW_GAME, UPDATE_GAME, JOIN_GAME } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
-import { clone, cloneDeep, shuffle } from 'lodash';
+import { cloneDeep, shuffle } from 'lodash';
 import { io } from 'socket.io-client';
 
 export const GameContext = createContext();
@@ -31,6 +32,7 @@ export default function GameContextProvider(props) {
   const [tileBag, setTileBag] = useState(null);
   const [turns, setTurns] = useState(0);
   const [players, setPlayers] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
   const [socket, setSocket] = useState(null);
   const [uploadType, setUploadType] = useState(null);
   const [roomId, setRoomId] = useState(null);
@@ -38,6 +40,7 @@ export default function GameContextProvider(props) {
   const playerIndex = turns % players.length;
 
   useEffect(() => {
+    // create new socket
     console.log('useEffect - socket');
     const newSocket = io('http://localhost:3001');
 
@@ -60,7 +63,8 @@ export default function GameContextProvider(props) {
       boardTiles: getPlacedTiles(board),
       tileBag,
       turns,
-      players
+      players,
+      gameOver
     };
 
     try {
@@ -109,7 +113,8 @@ export default function GameContextProvider(props) {
       boardTiles: getPlacedTiles(createEmptyBoard()),
       tileBag,
       turns: 0,
-      players
+      players,
+      gameOver: false
     };
 
     setGameState(initialState, NEW_GAME);
@@ -118,7 +123,9 @@ export default function GameContextProvider(props) {
   const setGameState = (game, nextAction = null) => {
     console.log('setGameState');
     try {
-      if (!game.players.some(player => player.userId === user.id)) {
+      if (user.id && !game.players.some(player => player.userId === user.id)) {
+        console.log(`user ${user.id} not in game. Adding.`);
+        console.log(user);
         const insertIndex = game.players.findIndex(player => player.userId === null);
         if (insertIndex === -1) {
           throw new Error('Game is full');
@@ -132,7 +139,6 @@ export default function GameContextProvider(props) {
       const newBoard = addTilesToBoard(game.boardTiles, createEmptyBoard());
       setBoard(newBoard);
   
-      const player = game.players.filter(player => player.userId === user.id);
       setTileBag(game.tileBag);
       setTurns(game.turns);
       setGameId(game.id);
@@ -140,6 +146,7 @@ export default function GameContextProvider(props) {
       setPlayers(game.players);
       setLetterSelectVisible(false);
       setIsTradingTiles(false);
+      setGameOver(game.gameOver);
       if (nextAction) {
         setUploadType(nextAction);
       }
@@ -171,16 +178,18 @@ export default function GameContextProvider(props) {
     setLetterSelectVisible(false);
   };
 
-  const playWord = () => {
+  const playWords = () => {
+    if (gameOver || players[playerIndex].userId !== user.id) return;
+
     let newBoard = cloneDeep(board);
+
     if (!isValidPlacement(board)) {
       alert('Invalid Move');
-      newBoard = newBoard.map(row => {
-        return row.map(square => {
+      newBoard.forEach(row => {
+        row.forEach(square => {
           if (square.tile && !square.tile.played) {
-            square.tile.className = 'tile-invalid';
+            square.tile.className = 'tile--invalid';
           }
-          return square;
         });
       })
       setBoard(newBoard);
@@ -190,26 +199,24 @@ export default function GameContextProvider(props) {
     const playedWords = getPlayableWords(board);
     if (playedWords.length === 0) {
       alert('no played words');
-      newBoard = newBoard.map(row => {
-        return row.map(square => {
+      newBoard.forEach(row => {
+        row.forEach(square => {
           if (square.tile && !square.tile.played) {
-            square.tile.className = 'tile-invalid';
+            square.tile.className = 'tile--invalid';
           }
-          return square;
         });
       })
       setBoard(newBoard);
       return;
     }
 
-    const invalidWords = playedWords.reduce((prevWord, word) => {
+    const invalidWords = playedWords.reduce((prevWords, word) => {
       const text = word.map(square => square.tile.letter).join('');
-      console.log(prevWord);
       console.log('isWord ', text, isWord(text));
       if (!isWord(text)) {
-        return [...prevWord, word]
+        return [...prevWords, word]
       }
-      return prevWord;
+      return prevWords;
     }, [])
 
     if (invalidWords.length > 0) {
@@ -220,7 +227,7 @@ export default function GameContextProvider(props) {
         newBoard = newBoard.map(row => {
           return row.map(square => {
             if (square.tile && indices.includes(square.index)) {
-              square.tile.className = 'tile-invalid';
+              square.tile.className = 'tile--invalid';
             }
             return square;
           });
@@ -232,35 +239,51 @@ export default function GameContextProvider(props) {
 
     let playerScore = players[playerIndex].score;
 
+    // Set className for previously scored tiles
+    newBoard.flat().forEach(square => {
+      if (square.tile && square.tile.played) {
+        square.tile.className = 'tile--played';
+        square.tile.totalPoints = null;
+      }
+    });
+
+    // Update new played tiles
     playedWords.forEach(word => {
       const indices = word.map(square => square.index);
       const score = scoreWord(word);
-      newBoard = newBoard.map(row => {
-        return row.map(square => {
-          if (square.tile) {
-            if (square.tile.className === 'tile-scored' && !indices.includes(square.index)) {
-              square.tile.className = 'tile-played';
-              square.tile.totalPoints = null;
-            }
-            if (indices.includes(square.index)) {
-              square.tile.className = 'tile-scored';
-              square.tile.played = true;
-              square.tile.totalPoints = square.index === indices[indices.length-1]
-              ? score
-              : square.tile.totalPoints
-            }
-          }
-          return square;
-        });
-      })
-
+      newBoard.flat().forEach(square => {
+        if (square.tile && indices.includes(square.index)) {
+          square.tile.className = 'tile--scored';
+          square.tile.played = true;
+          square.tile.totalPoints = square.index === indices[indices.length-1]
+            ? score
+            : square.tile.totalPoints
+        }
+      });
       playerScore += score;
     });
 
-    let newPlayers = cloneDeep(players);
-    let newTileBag = [...tileBag];
+    const newPlayers = cloneDeep(players);
+    const newTileBag = [...tileBag];
     newPlayers[playerIndex].score = playerScore;
     drawTiles(newTileBag, newPlayers[playerIndex].tiles);
+
+    if (newTileBag.length === 0 && newPlayers[playerIndex].tiles.length === 0) {
+      newPlayers.forEach((player, i) => {
+        if (i === playerIndex) return;
+
+        const unplayedPoints = player.tiles.reduce((totalPoints, tile) => {
+          return tile !== null 
+            ? totalPoints + tile.points
+            : totalPoints
+        }, 0);
+
+        player.score -= unplayedPoints;
+        newPlayers[playerIndex].score += unplayedPoints;
+
+      });
+      setGameOver(true);
+    }
 
     setBoard(newBoard);
     setPlayers(newPlayers);
@@ -301,22 +324,28 @@ export default function GameContextProvider(props) {
     setGrabbedTile({
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
-      className: 'tile-grabbed',
+      className: 'tile--grabbed',
       dragPosX: `${event.clientX - 20}px`,
       dragPosY: `${event.clientY - 20}px`,
     });
   }
 
-  const placeTileOnRack = (index) => {
+  const placeTileOnRack = (index, swapTiles = false) => {
     if (grabbedTile === null) return;
-    let newPlayers = cloneDeep(players);
-    let rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    const swap = swapTiles 
+      ? { 
+        ...rack[index],
+        className: 'tile--grabbed'
+      }
+      : null;
     rack[index] = {
       ...grabbedTile,
       className: 'tile'
     };
     setPlayers(newPlayers);
-    setGrabbedTile(null);
+    setGrabbedTile(swapTiles ? swap : null);
   }
 
   const grabTileFromBoard = (event, tile, index) => {
@@ -327,9 +356,9 @@ export default function GameContextProvider(props) {
     ) return;
     const newBoard = cloneDeep(board).map(row => {
       return row.map(square => {
-        if (square.tile && square.tile.className === 'tile-invalid') {
+        if (square.tile && square.tile.className === 'tile--invalid') {
           square.tile.className = square.tile.played 
-            ? 'tile-played'
+            ? 'tile--played'
             : 'tile'
         }
         return square;
@@ -342,30 +371,41 @@ export default function GameContextProvider(props) {
     setGrabbedTile({
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
-      className: 'tile-grabbed',
+      className: 'tile--grabbed',
       grabbed: true,
       dragPosX: `${event.clientX - 20}px`,
       dragPosY: `${event.clientY - 20}px`,
     });
   }
 
-  const placeTileOnBoard = (index) => {
-    if (grabbedTile === null || players[playerIndex].userId !== user.id) return;
-    let newBoard = cloneDeep(board);
-    const pos2d = get2dPos(index);
-    newBoard[pos2d[0]][pos2d[1]].tile = {
+  const placeTileOnBoard = (index, swapTiles = false) => {
+    const [y, x] = get2dPos(index);
+    
+    if (
+      grabbedTile === null 
+      || players[playerIndex].userId !== user.id
+      || (board[y][x].tile && board[y][x].tile.played)
+      ) return;
+
+    const newBoard = cloneDeep(board);
+    const swap = swapTiles
+      ? {
+        ...newBoard[y][x].tile,
+        className: 'tile--grabbed'
+      }
+      : null;
+    newBoard[y][x].tile = {
       ...grabbedTile,
       grabbed: false,
       className: 'tile'
     };
-    newBoard = newBoard.map(row => {
-      return row.map(square => {
-        if (square.tile && square.tile.className === 'tile-invalid') {
+    newBoard.forEach(row => {
+      row.forEach(square => {
+        if (square.tile && square.tile.className === 'tile--invalid') {
           square.tile.className = square.tile.played 
-            ? 'tile-played'
+            ? 'tile--played'
             : 'tile'
         }
-        return square;
       });
     })
     setBoard(newBoard);
@@ -373,15 +413,15 @@ export default function GameContextProvider(props) {
       setLetterSelectVisible(true);
     }
 
-    setGrabbedTile(null);
+    setGrabbedTile(swapTiles ? swap : null);
   }
 
   const selectTile = (e, tile, index) => {
     const newPlayers = cloneDeep(players);
     const tiles = newPlayers[playerIndex].tiles;
-    tiles[index].className = tile.className === 'tile-selected'
+    tiles[index].className = tile.className === 'tile--selected'
       ? 'tile'
-      : 'tile-selected'
+      : 'tile--selected'
 
     setPlayers(newPlayers);
   }
@@ -394,7 +434,6 @@ export default function GameContextProvider(props) {
     const playerTiles = newPlayers[playerIndex].tiles;
 
     recallTilesFromBoard(newBoard, playerTiles);
-    playerTiles.forEach(tile => tile.className = 'tile');
     setBoard(newBoard);
     setPlayers(newPlayers);
   }
@@ -407,7 +446,6 @@ export default function GameContextProvider(props) {
     const playerTiles = newPlayers[playerIndex].tiles;
 
     recallTilesFromBoard(newBoard, playerTiles);
-    playerTiles.forEach(tile => tile.className = 'tile');
     setBoard(newBoard);
     setPlayers(newPlayers);
     setTurns(turns + 1);
@@ -430,7 +468,6 @@ export default function GameContextProvider(props) {
     const playerTiles = newPlayers[playerIndex].tiles;
 
     recallTilesFromBoard(newBoard, playerTiles);
-    playerTiles.forEach(tile => tile.className = 'tile');
     setBoard(newBoard);
     setPlayers(newPlayers);
     setIsTradingTiles(!isTradingTiles);
@@ -441,8 +478,13 @@ export default function GameContextProvider(props) {
     const newPlayers = cloneDeep(players);
     const rack = newPlayers[playerIndex].tiles;
 
+    if (!rack.some(tile => tile.className === 'tile--selected')) {
+      setIsTradingTiles(!isTradingTiles);
+      return;
+    }
+
     rack.forEach((tile, i) => {
-      if (tile.className === 'tile-selected') {
+      if (tile.className === 'tile--selected') {
         tile.className = 'tile';
         newTileBag.push(tile);
         rack[i] = newTileBag.splice(0, 1)[0];
@@ -466,6 +508,7 @@ export default function GameContextProvider(props) {
       isTradingTiles,
       players,
       turns,
+      gameOver,
       setGameState,
       createGame,
       grabTileFromRack,
@@ -474,7 +517,7 @@ export default function GameContextProvider(props) {
       placeTileOnBoard,
       moveGrabbedTile,
       selectLetter,
-      playWord,
+      playWords,
       skipTurn,
       recallTiles,
       shuffleTiles,
