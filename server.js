@@ -1,35 +1,29 @@
 'use strict';
 
-const jsonServer = require('json-server');
-const app = jsonServer.create();
-const router = jsonServer.router('./data/db.json');
-const middlewares = jsonServer.defaults();
-const socketIO = require('socket.io');
+import 'dotenv/config';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { Low , JSONFile } from 'lowdb';
+import express from 'express';
+import { Server as SocketIO } from 'socket.io';
 
-const PORT = 3001;
-app.use(middlewares)
-app.use(router)
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const file = join(__dirname, '/data/db.json');
+const adapter = new JSONFile(file);
+const db = new Low(adapter);
 
-router.render = (req, res) => {
-  let [path, queryParam, value] = req.url.split(/(?:\?|\=)/);
+await db.read();
 
-  if (path === '/games' && queryParam === 'players.userId') {
-    if (value === 'null') value = null;
-    let filteredGames = res.locals.data.filter((game) => {
-      return game.players.some(player => player.userId === value);
-    });
+db.data ||= { users: [], games: [] };
 
-    return res.status(200).jsonp(filteredGames);
-  }
-  res.status(200).jsonp(res.locals.data);
-}
+const app = express();
 
-const server = app.listen(PORT, () => {
-  console.log('JSON Server is listening on port ' + PORT);
+const server = app.listen(process.env.PORT, () => {
+  console.log('Server is listening on port ' + process.env.PORT);
 })
 
 // socket
-const io = socketIO(server, {
+const io = new SocketIO(server, {
   cors: {
     origin: true
   }
@@ -37,50 +31,91 @@ const io = socketIO(server, {
 
 io.on('connection', (socket) => {
   console.log('New socket connection: ', socket.id);
-  const db = router.db;
-  db.read();
-  let gameId;
 
-  socket.on('joinGame', (data, callback) => {
-    console.log('joined game ', data.gameId);
+  socket.on('putUser', async (data, cb) => {
+    const existingUser = db.data.users
+      .filter(user => user.id === data.user.id)[0];
+
+    if (existingUser) {
+      console.log('user exists');
+      existingUser.updatedAt = Date.now();
+
+      await db.write();
+    } else {
+      console.log('new user')
+      db.data
+        .users
+        .push({
+          ...data.user,
+          updatedAt: Date.now()
+        });
+
+      await db.write();
+    }
+
+    cb('ok');
+  })
+
+  socket.on('putGame', async (data, cb) => {
+    console.log('putGame');
+
+    const existingGameIndex = db.data.games
+      .findIndex(game => game.id === data.id);
+
+    if (existingGameIndex !== -1) {
+      console.log('existing game, modifying');
+      db.data.games[existingGameIndex] = data;
+    } else {
+      db.data.games.push(data);
+    }
+
+    await db.write();
+
+    if (!socket.rooms.has(data.id)) {
+      for (let room of socket.rooms.values()) {
+        console.log(`leaving room: ${room}`);
+        socket.leave(room);
+      }
+      console.log(`joining room: ${data.id}`);
+      socket.join(data.id);
+    }
+
+    socket.to(data.id).emit('gameState', data);
+    cb('ok');
+  });
+
+  socket.on('joinRoom', (id, ack) => {
+    console.log('joinRoom', id);
     for (let room of socket.rooms.values()) {
       console.log(`leaving room: ${room}`);
       socket.leave(room);
     }
-    let gameId = data.gameId;
-    console.log(`joining room: ${gameId}`);
-    socket.join(gameId);
+    console.log(`joining room: ${data.id}`);
+    socket.join(data.id);
 
-    const gameState = db.get('games').value().filter(game => game.id === gameId)[0];
-    socket.to(gameId).emit('gameState', gameState);
-
-    callback({
-      success: true,
-      roomId: [...socket.rooms][0]
-    });
+    cb('ok');
   });
 
-  socket.on('newGame', (data, callback) => {
-    // this seems incorrect but it's the only way I could get the lowdb instance to write data
-    
-    const games = db.get('games').value();
-    games.push(data.gameState)
-    db.set('games', games).write();
+  socket.on('getMyGames', userId => {
+    console.log('getMyGames')
+    if (db.data.games.length === 0) return;
 
-    callback({ success: true });
+    const gameList = db.data.games
+      .filter(game => game.players.some(player => player.userId === userId));
+        
+    socket.emit('myGames', gameList);
   });
 
-  socket.on('updateGame', (data, callback) => {
-    const games = db.get('games').value().map(game => {
-      if (game.id === data.gameState.id) {
-        return data.gameState;
-      }
+  socket.on('getPublicGames', userId => {
+    console.log('getPublicGames', userId)
+    if (db.data.games.length === 0) return;
 
-      return game;
-    })
-    db.set('games', games).write();
-
-    socket.to(data.gameState.id).emit('gameState', data.gameState);
-    callback({ success: true });
+    const gameList = db.data.games
+      .filter(game => (
+        game.players.every(player => player.userId !== userId)
+        && game.players.some(player => !player.userId)
+      ));
+        
+    socket.emit('publicGames', gameList);
   });
 });

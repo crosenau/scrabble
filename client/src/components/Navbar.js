@@ -31,11 +31,11 @@ export default function Navbar() {
           </li>
           <li>
             <NavLink 
-              to="/browsegames" 
+              to="/publicgames" 
               className="nav-button" 
               //activeClassName="nav-button-selected" 
             >
-              Browse Public Games
+              Public Games
             </NavLink>
           </li>
         </ul>

@@ -1,7 +1,6 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameContext } from '../../contexts/GameContext';
-import { UPDATE_GAME } from '../../constants';
 
 
 export default function GameList({ games, buttonLabel }) {
@@ -20,7 +19,7 @@ export default function GameList({ games, buttonLabel }) {
           </div>
           <button 
             onClick={() => {
-              setGameState(game, UPDATE_GAME);
+              setGameState(game, true);
               navigate('../game');
             }}>{buttonLabel}</button>
         </div>

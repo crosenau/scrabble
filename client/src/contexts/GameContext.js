@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { UserContext } from './UserContext';
+import { SocketContext } from './SocketContext';
 import {
   get2dPos,
   createEmptyBoard,
@@ -13,15 +14,14 @@ import {
   createTestBag
 } from '../utils/gameUtils';
 import { isWord } from '../utils/dictionary';
-import { NEW_GAME, UPDATE_GAME, JOIN_GAME } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep, shuffle } from 'lodash';
-import { io } from 'socket.io-client';
 
 export const GameContext = createContext();
 
 export default function GameContextProvider(props) {
   const { user } = useContext(UserContext);
+  const { isOnline, putGame, gameState } = useContext(SocketContext);
 
   const [grabbedTile, setGrabbedTile] = useState(null);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
@@ -33,31 +33,21 @@ export default function GameContextProvider(props) {
   const [turns, setTurns] = useState(0);
   const [players, setPlayers] = useState([]);
   const [gameOver, setGameOver] = useState(false);
-  const [socket, setSocket] = useState(null);
-  const [uploadType, setUploadType] = useState(null);
-  const [roomId, setRoomId] = useState(null);
+  const [emit, setEmit] = useState(false);
   
   const playerIndex = turns % players.length;
 
   useEffect(() => {
-    // create new socket
-    console.log('useEffect - socket');
-    const newSocket = io('http://localhost:3001');
-
-    newSocket.on('gameState', (data) => {
-      console.log('socketData: ', data);
-      setGameState(data, false);
-
-    })
-    setSocket(newSocket);
-    return () => newSocket.close();
-  }, []);
-
+    if (gameState) {
+      setGameState(gameState);
+    }
+  }, [gameState]);
+  
   useEffect(() => {
-    console.log('useEffect - uploadType');
-    if (!uploadType) return;
+    console.log('useEffect - uploadType', emit);
+    if (!emit) return;
 
-    const gameState = {
+    const game = {
       name: gameName,
       id: gameId,
       boardTiles: getPlacedTiles(board),
@@ -67,25 +57,9 @@ export default function GameContextProvider(props) {
       gameOver
     };
 
-    try {
-      socket.emit(uploadType, { gameState }, (ack) => {
-        if (!ack.success) {
-          throw new Error('Error setting gameState');
-        }
-        if (roomId !== gameId) {
-          socket.emit(JOIN_GAME, { gameId }, (ack) => {
-            if (!ack.success) {
-              throw new Error('Error joining room');
-            }
-            setRoomId(ack.roomId);
-          });
-        }
-        setUploadType(null);
-      })
-    } catch(error) {
-      console.log(error);
-    }
-  }, [uploadType]);
+    putGame(game);
+    setEmit(null);
+  }, [emit]);
 
   const createGame = (name, numPlayers) => {
     let tileBag = createTileBag();
@@ -117,15 +91,14 @@ export default function GameContextProvider(props) {
       gameOver: false
     };
 
-    setGameState(initialState, NEW_GAME);
+    setGameState(initialState, true);
   };
 
-  const setGameState = (game, nextAction = null) => {
-    console.log('setGameState');
+  const setGameState = (game, emitAfter = false) => {
+    console.log('setGameState', emitAfter);
     try {
       if (user.id && !game.players.some(player => player.userId === user.id)) {
         console.log(`user ${user.id} not in game. Adding.`);
-        console.log(user);
         const insertIndex = game.players.findIndex(player => player.userId === null);
         if (insertIndex === -1) {
           throw new Error('Game is full');
@@ -147,8 +120,8 @@ export default function GameContextProvider(props) {
       setLetterSelectVisible(false);
       setIsTradingTiles(false);
       setGameOver(game.gameOver);
-      if (nextAction) {
-        setUploadType(nextAction);
+      if (emitAfter) {
+        setEmit(true);
       }
     } catch(error) {
       console.log(error);
@@ -289,7 +262,7 @@ export default function GameContextProvider(props) {
     setPlayers(newPlayers);
     setTurns(turns + 1);
     setTileBag(newTileBag);
-    setUploadType(UPDATE_GAME);
+    setEmit(true);
   };
 
   const scoreWord = (word) => {
@@ -449,7 +422,7 @@ export default function GameContextProvider(props) {
     setBoard(newBoard);
     setPlayers(newPlayers);
     setTurns(turns + 1);
-    setUploadType(UPDATE_GAME);
+    setEmit(true);
   }
 
   const shuffleTiles = () => {
@@ -495,7 +468,7 @@ export default function GameContextProvider(props) {
     setPlayers(newPlayers);
     setIsTradingTiles(!isTradingTiles);
     setTurns(turns + 1)
-    setUploadType(UPDATE_GAME);
+    setEmit(true);
   }
 
   return (

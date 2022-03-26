@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
@@ -21,10 +22,11 @@
   },
   "homepage": "https://github.com/crosenau/scrabble#readme",
   "devDependencies": {
-    "json-server": "^0.17.0",
     "nodemon": "^2.0.15"
   },
   "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.17.3",
     "lowdb": "^3.0.0",
     "socket.io": "^4.4.1"
   }
