@@ -4,7 +4,7 @@ const { floor, min, random } = Math;
 // Tiles
 const createTile = (
   letter, 
-  points,
+  points = null,
   className = 'tile',
   totalPoints = null,
   played = false,
@@ -101,7 +101,7 @@ const createTestBag = () => {
 const getAllTiles = () => {
   const letters = [];
   for (let x = 1; x < allTiles.length; x++) {
-    letters.push(createTile(allTiles[x].letter, null));
+    letters.push(createTile(allTiles[x].letter));
   }
 
   return letters;
@@ -414,7 +414,7 @@ const recallTilesFromBoard = (board, playerTiles) => {
   playerTiles.forEach(tile => {
     if (!tile) return;
     tile.letter = tile.points === 0 ? '' : tile.letter;
-    tile.className = 'tile'
+    tile.className = 'tile';
   });
 }
 

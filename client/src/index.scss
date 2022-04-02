@@ -8,8 +8,10 @@ body {
 }
 
 .app {
+  width: 100vw;
   height: 100vh;
-  background-color: #2C3E50;
+  background-image: radial-gradient(circle, #394d65, #1d2935);
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
 }

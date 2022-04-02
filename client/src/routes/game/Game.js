@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import Board from './Board';
 import Rack from './Rack';
 import Tile from './Tile';
+import GreenButton from '../../components/GreenButton';
 import PlayerList from './PlayerList';
 import LetterSelection from './LetterSelection';
 import { GameContext } from '../../contexts/GameContext';
@@ -31,27 +32,24 @@ export default function Game() {
   
   return (
     <div className="game" onMouseMove={(e) => moveGrabbedTile(e)}>
-      <div className="game__players">
+      <div className="game__left">
         <PlayerList />
+        <div className="turn-buttons">
+          <GreenButton label="Skip" type="button" onClick={skipTurn} />
+          { isTradingTiles
+            ? <GreenButton label="Confirm" type="button" onClick={tradeSelectedTiles} />
+            : <GreenButton label="Trade" type="button" onClick={toggleIsTradingTiles} />
+          }
+
+          <GreenButton label="Play" type="button" onClick={playWords} />
+        </div>
       </div>
-      <div className="game__interactable">
+      <div className="game__right">
         <Board />
-        <div className="controls">
-          <div className="controls__left-buttons">
-            <button type="button" onClick={playWords}>Play</button>
-            { isTradingTiles
-              ? <button type="button" onClick={tradeSelectedTiles}>Confirm</button>
-              : <button type="button" onClick={toggleIsTradingTiles}>Trade</button>
-            }
-
-            <button type="button" onClick={skipTurn}>Skip</button>
-          </div>
-          <Rack />
-          <div className="controls__right-buttons">
-            <button type="button" onClick={shuffleTiles}>Shuffle</button>
-            <button type="button" onClick={recallTiles}>Recall</button>
-
-          </div>
+        <Rack />
+        <div className="tile-buttons">
+          <GreenButton label="Recall" type="button" onClick={recallTiles} />
+          <GreenButton label="Shuffle" type="button" onClick={shuffleTiles} />
         </div>
       </div>
       { grabbedTile ? (

@@ -16,13 +16,12 @@ export default function MyGames() {
     return () => setMyGames(null);
   }, [isOnline])
 
-  if (!myGames || myGames.length < 1) {
-    return <div>You have no games</div>
-  }
-
   return (
     <div className="menu">
-      <GameList games={myGames} buttonLabel="Resume" />
+      {(!myGames || myGames.length < 1)
+        ? <div className="menu__message">You have not joined or created any games.</div> 
+      : <GameList games={myGames} buttonLabel="Resume" />
+      }
     </div>
   );
 }

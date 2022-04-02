@@ -1,3 +1,5 @@
+import './tile.scss';
+
 export default function Tile({ tile, style, handleMouseDown, handleMouseUp, index }) {  
   return (
     <div 

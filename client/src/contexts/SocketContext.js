@@ -12,7 +12,7 @@ export default function SocketContextProvider(props) {
   const [gameState, setGameState] = useState(null);
   
   useEffect(() => {
-    const newSocket = io('http://localhost:3001');
+    const newSocket = io('//:3001');
 
     newSocket.on('connect', () => {
       console.log('client connected');

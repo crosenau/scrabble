@@ -1,4 +1,5 @@
 import { useState, useContext } from 'react';
+import GreenButton from '../../components/GreenButton';
 import { UserContext } from '../../contexts/UserContext';
 import { Navigate } from 'react-router-dom';
 import './menus.scss'
@@ -23,24 +24,20 @@ export default function NewPlayer() {
   }
 
   return (
-    <div id="player-form-container">
+    <div className="menu">
       <form onSubmit={handleSubmit}>
-        <div className="field-container">
-          <label htmlFor="name">Player Name</label>
+        <div className="menu__options">
+          <label htmlFor="name">User Name</label>
           <input
             type="text"
             id="name"
             value={name}
             onChange={handleChange}
           />
+          <GreenButton label="Create User" type="submit" />
+          <span>{user.error}</span>
         </div>
-        <button
-          className="button-submit"
-          type="submit"
-        >
-          Enter
-        </button>
-        <span>{user.error}</span>
+
       </form>
     </div>
   );

@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
+import './board.scss';
 
 export default function Board() {
   const { board, grabTileFromBoard, placeTileOnBoard, players, turns } = useContext(GameContext);
@@ -19,14 +20,19 @@ export default function Board() {
     >
     {board.flat().map((square, i) => {
       return square.tile ? (
-        <Tile 
-          handleMouseDown={grabTileFromBoard}
-          handleMouseUp={placeTileOnBoard}
-          tile={square.tile}
-          index={i}
-          fromRack={false}
-          key={i}
-        />
+        <div className={square.className} key={i}>
+          <Tile 
+            handleMouseDown={grabTileFromBoard}
+            handleMouseUp={placeTileOnBoard}
+            tile={square.tile}
+            style={{ 
+              position: 'absolute',
+              transform: 'scale(0.98)'
+            }}
+            index={i}
+            fromRack={false}
+          />
+        </div>
       )
       : (
       <div 
@@ -34,11 +40,7 @@ export default function Board() {
         onMouseUp={() => placeTileOnBoard(i)}
         key={i}
       >
-        {square.text && (
-          <div className="board__square-white-text">
-            {square.text}
-          </div>
-        )}
+        {square.text}
       </div>
       );
     })}

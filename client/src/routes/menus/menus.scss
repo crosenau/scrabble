@@ -1,55 +1,83 @@
+@use "../../mixins";
+
 .menu {
-  color: white;
+  @include mixins.user-select(none);
+  height: 100%;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
-.menu-options {
-  color: white;
+.menu__options {
+  @include mixins.panel;
   display: flex;
   flex-direction: column;
   align-items: center;
+  
+  & > * {
+    margin: 0.25rem 0;
+  }
 }
 
+.menu__message {
+  @include mixins.panel;
+}
+
+// Game List
 .game-list {
+  @include mixins.panel;
+  padding: 0 1.5rem 1.5rem 1.5rem;
+  width: 60vw;
+  height: calc(100vh - 12rem);
+  position: relative;
+  user-select: none;
   display: flex;
   flex-direction: column;
-  align-items: space-between;
-  width: 50%;
-  margin: 2em 0;
 }
 
-.game-list-item {
-  display: flex;
-  margin: 10px;
-  box-shadow: 0 10px 20px #000a;
-  width: 100%;
+.game-list__headers, .game-list__rows {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  align-items: center;
 }
 
-.game-info {
-  display: flex;
-  flex-direction: column;
-  width: 90%;
+.game-list__headers {
+  position: sticky;
+  top: 0;
+  padding-top: 1rem;
+  height: 3rem;
+  
+  & > hr {
+    width: 100%;
+    grid-column: 1 / 6;
+  }
 }
 
-.game-name {
-  display: flex;
-  color: #333;
-  background-color: #ECF0F1;
-  font-size: 2em;
-  padding: 5px 10px;
+.game-list__rows {
+  overflow: auto;
 }
 
-.player-slots {
-  display: flex;
-  color: #ddd;
-  background-color: #2980B9;
-  font-size: 1.5em;
-  padding: 5px 10px;
-  display: flex;
-}
+.game-list__row {
+  display: contents;
+  
+  & > div {
+    color: white;
+    padding: 0.6rem 0;
+  }
+  
+  &:hover > div {
+    background-color: #aaa4;
+  }
 
-.game-list-item > button {
-  width: 10%;
+  // & > button {
+  //   color: white;
+  //   background-color: #282;
+  //   border: none;
+  //   border-radius: 0.4rem;
+  // }
+
+  // & > button:hover {
+  //   color: black;
+  //   background-color: #494;
+  // }
 }

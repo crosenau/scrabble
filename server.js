@@ -4,7 +4,6 @@ import 'dotenv/config';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Low , JSONFile } from 'lowdb';
-import express from 'express';
 import { Server as SocketIO } from 'socket.io';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -16,14 +15,7 @@ await db.read();
 
 db.data ||= { users: [], games: [] };
 
-const app = express();
-
-const server = app.listen(process.env.PORT, () => {
-  console.log('Server is listening on port ' + process.env.PORT);
-})
-
-// socket
-const io = new SocketIO(server, {
+const io = new SocketIO({
   cors: {
     origin: true
   }
@@ -119,3 +111,5 @@ io.on('connection', (socket) => {
     socket.emit('publicGames', gameList);
   });
 });
+
+io.listen(3001);

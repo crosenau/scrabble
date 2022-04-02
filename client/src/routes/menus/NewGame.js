@@ -1,7 +1,8 @@
 import { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
-import { useNavigate } from 'react-router-dom';
+import GreenButton from '../../components/GreenButton';
 import './menus.scss'
 
 export default function Menu() {
@@ -31,28 +32,30 @@ export default function Menu() {
 
   return (
     <div className="menu">
-      <form className="menu-options" onSubmit={handleSubmit}>
-        <h1>New Game</h1>
-        <label htmlFor="name">Game Name:</label>
-        <input
-          id="name"
-          type="text"
-          maxLength="24"
-          required={true}
-          placeholder={`${user.name}'s game`}
-          value={name}
-          onChange={handleNameChange}
-        ></input>
-        <label htmlFor="players">Players: </label>
-        <input 
-          id="players" 
-          type="number" 
-          min="2" 
-          max="4"
-          value={numPlayers}
-          onChange={handleNumChange}
-        />
-        <button>Start</button>
+      <form onSubmit={handleSubmit}>
+        <div className="menu__options">
+          <h1>New Game</h1>
+          <label htmlFor="name">Game Name</label>
+          <input
+            id="name"
+            type="text"
+            maxLength="24"
+            required={true}
+            placeholder={`${user.name}'s game`}
+            value={name}
+            onChange={handleNameChange}
+          ></input>
+          <label htmlFor="players">Players</label>
+          <input 
+            id="players" 
+            type="number" 
+            min="1" 
+            max="4"
+            value={numPlayers}
+            onChange={handleNumChange}
+          />
+          <GreenButton label="Start" type="submit" />
+        </div>
       </form>
   </div>
   );

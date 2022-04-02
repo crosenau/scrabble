@@ -75,7 +75,7 @@ export default function GameContextProvider(props) {
     for (let x = 1; x < numPlayers; x++) {
       players.push({
         userId: null,
-        userName: '[Empty]',
+        userName: '',
         tiles: tileBag.splice(0, 7),
         score: 0
       });
@@ -131,8 +131,8 @@ export default function GameContextProvider(props) {
   const moveGrabbedTile = (event) => {
     if (!grabbedTile) return;
     const newGrabbedTile = { ...grabbedTile };
-    newGrabbedTile.dragPosX = `${event.clientX - 20}px`;
-    newGrabbedTile.dragPosY = `${event.clientY - 20}px`;
+    newGrabbedTile.dragPosX = `${event.clientX - 35}px`;
+    newGrabbedTile.dragPosY = `${event.clientY - 30}px`;
     setGrabbedTile(newGrabbedTile);
   };
 
@@ -298,8 +298,8 @@ export default function GameContextProvider(props) {
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
       className: 'tile--grabbed',
-      dragPosX: `${event.clientX - 20}px`,
-      dragPosY: `${event.clientY - 20}px`,
+      dragPosX: `${event.clientX - 35}px`,
+      dragPosY: `${event.clientY - 30}px`,
     });
   }
 
@@ -315,7 +315,7 @@ export default function GameContextProvider(props) {
       : null;
     rack[index] = {
       ...grabbedTile,
-      className: 'tile'
+      className: 'tile',
     };
     setPlayers(newPlayers);
     setGrabbedTile(swapTiles ? swap : null);
@@ -346,8 +346,8 @@ export default function GameContextProvider(props) {
       letter: tile.points > 0 ? tile.letter : null,
       className: 'tile--grabbed',
       grabbed: true,
-      dragPosX: `${event.clientX - 20}px`,
-      dragPosY: `${event.clientY - 20}px`,
+      dragPosX: `${event.clientX - 35}px`,
+      dragPosY: `${event.clientY - 30}px`,
     });
   }
 

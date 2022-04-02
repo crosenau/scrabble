@@ -1,0 +1,57 @@
+@use "../../mixins";
+
+.board {
+  @include mixins.user-select(none);
+  background-color: #200a0b;
+  width: var(--board-size);
+  height: var(--board-size);
+  padding: calc(var(--tile-size) / 4);
+  border-radius: calc(var(--tile-size) / 4);
+  font-size: calc(var(--tile-size) / 2.5);
+  color: white;
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  grid-template-rows: repeat(15, 1fr);
+  max-width: var(--board-size);
+  max-height: var(--board-size);
+  justify-items: stretch;
+  align-items: stretch;
+}
+
+@mixin square {
+  position: relative;
+  margin: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board__square {
+  background-color: #E0EDFA;
+  @include square;
+}
+
+.board__square-center {
+  @include square;
+  background-color: #A93249;
+}
+
+.board__square-triple-word {
+  @include square;
+  background-color: #F06A13;
+}
+
+.board__square-double-word {
+  @include square;
+  background-color: #A93249;
+}
+
+.board__square-triple-letter {
+  @include square;
+  background-color: #619437;
+}
+
+.board__square-double-letter {
+  @include square;
+  background-color: #4B9DCC;
+}

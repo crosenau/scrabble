@@ -1,0 +1,83 @@
+@use "sass:color";
+
+:root {
+  --tile-bottom: calc(var(--tile-size) * 0.1);
+}
+
+@mixin tile($base-clr) {
+  width: var(--tile-size);
+  height: var(--tile-size);
+  border-radius: calc(var(--tile-size) * 0.12);
+  background-color: $base-clr;
+  border-bottom: var(--tile-bottom) solid color.scale($base-clr, $lightness: -50%, $saturation: -50%);
+  box-shadow: 0px 5px 2px #000a;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(5, 1fr);
+  align-items: center;
+  justify-content: center;
+}
+
+.tile {
+  @include tile(#d69f7f);
+  cursor: grab;
+}
+
+.tile--grabbed {
+  @include tile(#d69f7f);
+  position: absolute;
+  pointer-events: none;
+  box-shadow: 0px 10px 20px #000A;
+  transform: scale(var(--tile-scale-factor)) rotate(-5deg);
+}
+
+.tile--invalid {
+  @include tile(#da6c6c);
+}
+
+.tile--scored {
+  @include tile(#9fd67f);
+}
+
+.tile--played {
+  @include tile(#bb8b6f);
+}
+
+.tile--selected {
+  @include tile(#fff1b0);
+}
+
+.tile__letter {
+  font-size: calc(var(--tile-size) / 2.5);
+  color: black;
+  grid-column: 2 / 5;
+  grid-row: 2 / 5;
+  display: flex;
+  justify-content: center;
+}
+
+.tile__points {
+  align-self: flex-start;
+  justify-self: flex-end;
+  font-size: calc(var(--tile-size) / 5);
+  color: black;
+  grid-column: 4 / 5;
+  grid-row: 4 / 5;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.tile__total-points {
+  color: white;
+  background-color: hsl(0, 85%, 50%);
+  padding: 0.1em;
+  align-self: stretch;
+  justify-self: stretch;
+  font-size: calc(var(--tile-size) / 5);
+  grid-column: 4 / 6;
+  grid-row: 1 / 3;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

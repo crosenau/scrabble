@@ -16,13 +16,12 @@ export default function PublicGames() {
     return () => setPublicGames(null);
   }, [isOnline])
 
-  if (!publicGames || publicGames.length < 1) {
-    return <div>No open public games</div>
-  }
-
   return (
     <div className="menu">
-      <GameList games={publicGames} buttonLabel="Join" />
+      {(!publicGames || publicGames.length < 1)
+        ? <div className="menu__message">There are no open public games.</div> 
+      : <GameList games={publicGames} buttonLabel="Join" />
+      }
     </div>
   );
 }

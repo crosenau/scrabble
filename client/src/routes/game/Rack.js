@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
+import './rack.scss';
 
 export default function Rack() {
   const {
@@ -21,23 +22,27 @@ export default function Rack() {
   }
 
   return (
-    <div className="rack">
-      {tiles.map((tile, i) => {
-        return tile ? (
-          <Tile 
-            tile={tile}
-            index={i}
-            handleMouseDown={isTradingTiles ? selectTile : grabTileFromRack}
-            handleMouseUp={isTradingTiles ? null : placeTileOnRack}
-            key={i}
-          />
-        )
-        : <div 
-            className="rack__empty" 
-            onMouseUp={() => placeTileOnRack(i)}
-            key={i}
-          ></div>
-      })}
+    <div className="rack-container">
+      <div className="rack">
+        {tiles.map((tile, i) => {
+          return tile ? (
+            <Tile 
+              tile={tile}
+              style={{ transform: 'scale(1.2)' }}
+              index={i}
+              handleMouseDown={isTradingTiles ? selectTile : grabTileFromRack}
+              handleMouseUp={isTradingTiles ? null : placeTileOnRack}
+              key={i}
+            />
+          )
+          : <div 
+              className="rack__empty"
+              style={{ transform: 'scale(1.2)' }}
+              onMouseUp={() => placeTileOnRack(i)}
+              key={i}
+            ></div>
+        })}
+      </div>
     </div>
   );
 }

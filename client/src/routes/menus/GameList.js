@@ -1,5 +1,6 @@
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import GreenButton from '../../components/GreenButton';
 import { GameContext } from '../../contexts/GameContext';
 
 
@@ -9,21 +10,34 @@ export default function GameList({ games, buttonLabel }) {
 
   return (
     <div className="game-list">
-      {games.map((game, i) => (
-        <div className="game-list-item" key={i}>
-          <div className="game-info">
-          <div className="game-name">{game.name}</div>
-          <div className="player-slots">{
-            `${game.players.filter(player => player.userId !== null).length}/${game.players.length} players`
-          }</div>
+      <div className="game-list__headers">
+        <div>Game Name</div>
+        <div>Players</div>
+        <div>Last Activity</div>
+        <div>Played Turns</div>
+        <div></div>
+        <hr />
+      </div>
+      <div className="game-list__rows">
+        {games.map((game, i) => (
+          <div className="game-list__row" key={i}>
+            <div>{game.name}</div>
+            <div>
+              {`${game.players.filter(player => player.userId !== null).length}/${game.players.length}`}
+            </div>
+            <div>{game.lastActivity || '?'}</div>
+            <div>{game.turns}</div>
+            <GreenButton
+              label={buttonLabel}
+              type="button" 
+              onClick={() => {
+                setGameState(game, true);
+                navigate('../game');
+              }} />
           </div>
-          <button 
-            onClick={() => {
-              setGameState(game, true);
-              navigate('../game');
-            }}>{buttonLabel}</button>
-        </div>
-      ))}
+        ))}
+      </div>
+
     </div>
   );
 }
