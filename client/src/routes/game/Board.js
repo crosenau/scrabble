@@ -22,8 +22,8 @@ export default function Board() {
       return square.tile ? (
         <div className={square.className} key={i}>
           <Tile 
-            handleMouseDown={grabTileFromBoard}
-            handleMouseUp={placeTileOnBoard}
+            handlePointerDown={grabTileFromBoard}
+            handlePointerUp={placeTileOnBoard}
             tile={square.tile}
             style={{ 
               position: 'absolute',
@@ -37,7 +37,9 @@ export default function Board() {
       : (
       <div 
         className={square.className} 
+        //onPointerUp={() => placeTileOnBoard(i)}
         onMouseUp={() => placeTileOnBoard(i)}
+        onTouchEnd={() => placeTileOnBoard(i)}
         key={i}
       >
         {square.text}

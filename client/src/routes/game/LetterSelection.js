@@ -13,7 +13,7 @@ export default function LetterSelection() {
         {allTiles.map((tile, i) => (
           <Tile
             tile={tile}
-            handleMouseDown={() => selectLetter(tile.letter)}
+            handlePointerDown={() => selectLetter(tile.letter)}
             key={i}
           />
         ))}

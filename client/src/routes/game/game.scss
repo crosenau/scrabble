@@ -13,6 +13,7 @@
   display: grid;
   grid-template-columns: repeat(21, 1fr);
   grid-template-rows: 0.1fr 2.8fr 0.1fr;
+  touch-action: pinch-zoom;
 }
 
 .game__left {

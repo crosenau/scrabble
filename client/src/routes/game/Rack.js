@@ -30,15 +30,15 @@ export default function Rack() {
               tile={tile}
               style={{ transform: 'scale(1.2)' }}
               index={i}
-              handleMouseDown={isTradingTiles ? selectTile : grabTileFromRack}
-              handleMouseUp={isTradingTiles ? null : placeTileOnRack}
+              handlePointerDown={isTradingTiles ? selectTile : grabTileFromRack}
+              handlePointerUp={isTradingTiles ? null : placeTileOnRack}
               key={i}
             />
           )
           : <div 
               className="rack__empty"
               style={{ transform: 'scale(1.2)' }}
-              onMouseUp={() => placeTileOnRack(i)}
+              onPointerUp={() => placeTileOnRack(i)}
               key={i}
             ></div>
         })}

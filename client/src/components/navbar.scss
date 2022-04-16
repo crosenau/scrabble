@@ -1,49 +1,152 @@
 @use "../mixins";
 
-#navbar {
+.nav {
   @include mixins.user-select(none);
   position: sticky;
   top: 0;
   left: 0;
-  color: white;
   width: 100%;
   height: 3rem;
-  background-color: #3498DB;
+  background-color: #2a81bb;
+  color: #ddd;
+  font-size: 1rem;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  z-index: 999;
+
+  --trans-length: 0.25s;
 }
 
-#logo {
-  font-size: 1.5rem;
+.nav__logo {
+  font-size: 1.5em;
   margin-left: 1rem;
 }
 
-#nav-content {
+.nav__items {
   width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-right: 1rem;
+  gap: 3rem;
+
+  & > li {
+    list-style: none;
+  }
 }
 
-ul {
-  display: flex;
-  gap: 2rem;
-}
-
-li {
-  list-style: none;
-
-}
-
-.nav-button {
+@mixin nav__item {
   cursor: pointer;
   text-decoration: none;
   user-select: none;
-  color: white;
+  color: inherit;
 }
 
-.nav-button-selected {
-  background-color: #3db2ff;
-  color: black;
+.nav__item {
+  @include nav__item;
+}
+
+.nav__item--active {
+  @include nav__item;
+  color: white;
+  font-weight: bold;
+}
+
+.nav__username {
+  margin-right: 1rem;
+}
+
+.nav__button, .nav__vertical-items {
+  display: none;
+}
+
+
+@media (max-width: 640px) {
+  .nav__logo, .nav__items {
+    display: none;
+  }
+
+  @mixin nav__button {
+    margin-left: 1rem;
+    padding: 0;
+    width: 2rem;
+    height: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--trans-length);
+  
+    & > div {
+      content: "";
+      width: 100%;
+      height: 4px;
+      background-color: #ddd;
+      border-radius: 4px;
+      transition: var(--trans-length);
+    }
+  }
+
+  .nav__button {
+    @include nav__button;
+  }
+
+  .nav__button--toggled {
+    @include nav__button;
+    width: 1.5rem;
+    transition: var(--trans-length);
+
+    & > div:nth-child(1) {
+      transform: rotate(45deg) scale(1.2);
+      transform-origin: 0%;
+      transition: var(--trans-length);
+    }
+
+    & > div:nth-child(2) {
+      height: 0;
+      transition: var(--trans-length);
+    }
+
+    & > div:nth-child(3) {
+      transform: rotate(-45deg) scaleX(1.2);
+      transform-origin: 0%;
+      transition: var(--trans-length);
+    }
+  }
+  
+  .nav__vertical-items {
+    position: fixed;
+    top: 3rem;
+    left: 0;
+    padding: 1rem;
+    margin: 0;
+    width: calc(60% - 2rem);
+    background-color: #2a81bb;
+    display: block;
+  
+    & > li {
+      list-style: none;
+    }
+  }
+  
+  .nav__vertical-item--active {
+    padding: 0.5rem;
+    display: block;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+    color: white;
+    border: 1px solid #ddd;
+    margin-bottom: 0.5rem;
+  }
+  
+  .nav__vertical-item {
+    padding: 0.5rem;
+    display: block;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+    color: inherit;
+    border: 1px solid #ddd;
+    margin-bottom: 0.5rem;
+  }
 }

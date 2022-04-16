@@ -1,9 +1,8 @@
-'use strict';
-
 import 'dotenv/config';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { Low , JSONFile } from 'lowdb';
+import express from 'express';
 import { Server as SocketIO } from 'socket.io';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -15,7 +14,18 @@ await db.read();
 
 db.data ||= { users: [], games: [] };
 
-const io = new SocketIO({
+const app = express();
+
+if (process.env.NODE_ENV === 'production') {
+  console.log('production');
+  app.use('/', express.static(join(__dirname, '/client/build')));
+}
+
+const server = app.listen(process.env.PORT, () => {
+  console.log(`Listening on port ${process.env.PORT}`);
+});
+
+const io = new SocketIO(server, {
   cors: {
     origin: true
   }
@@ -111,5 +121,3 @@ io.on('connection', (socket) => {
     socket.emit('publicGames', gameList);
   });
 });
-
-io.listen(3001);
