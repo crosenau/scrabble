@@ -5,18 +5,12 @@ import Tile from './Tile';
 import './rack.scss';
 
 export default function Rack() {
-  const {
-    players,
-    grabTileFromRack,
-    placeTileOnRack,
-    isTradingTiles,
-    selectTile
-  } = useContext(GameContext);
+  const { players } = useContext(GameContext);
   const { user } = useContext(UserContext);
   const tiles = players.filter(player => player.userId === user.id)[0].tiles;
-  const maxTiles = 7;
+  const numTiles = 7;
 
-  while (tiles.length < maxTiles) {
+  while (tiles.length < numTiles) {
     console.log('Rack: filling in blank tiles');
     tiles.push(null);
   }
@@ -24,24 +18,19 @@ export default function Rack() {
   return (
     <div className="rack-container">
       <div className="rack">
-        {tiles.map((tile, i) => {
-          return tile ? (
-            <Tile 
-              tile={tile}
-              style={{ transform: 'scale(1.2)' }}
-              index={i}
-              handlePointerDown={isTradingTiles ? selectTile : grabTileFromRack}
-              handlePointerUp={isTradingTiles ? null : placeTileOnRack}
-              key={i}
-            />
-          )
-          : <div 
-              className="rack__empty"
-              style={{ transform: 'scale(1.2)' }}
-              onPointerUp={() => placeTileOnRack(i)}
-              key={i}
-            ></div>
-        })}
+        {tiles.map((tile, i) => (
+          <div 
+            className="rack__cell"
+            data-index={i}
+            style={{ transform: 'scale(1.2)' }}
+            key={i}
+          >
+            {tile 
+              ? <Tile tile={tile}/>
+              : null
+            }
+            </div>
+        ))}
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ export const GameContext = createContext();
 
 export default function GameContextProvider(props) {
   const { user } = useContext(UserContext);
-  const { isOnline, putGame, gameState } = useContext(SocketContext);
+  const { putGame, gameState } = useContext(SocketContext);
 
   const [grabbedTile, setGrabbedTile] = useState(null);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
@@ -140,9 +140,9 @@ export default function GameContextProvider(props) {
     const newboard = board;
     
     newboard.forEach(row => {
-      row.forEach(square => {
-        if (square.tile && square.tile.letter === null) {
-          square.tile.letter = letter;
+      row.forEach(cell => {
+        if (cell.tile && cell.tile.letter === null) {
+          cell.tile.letter = letter;
         }
       });
     });
@@ -288,12 +288,14 @@ export default function GameContextProvider(props) {
     return score;
   };
 
-  const grabTileFromRack = (event, tile, index) => {
-    if (grabbedTile !== null) return;
-    let newPlayers = cloneDeep(players);
-    let rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
-    rack[index] = null;
-    setPlayers(newPlayers);
+  const grabTileFromRack = (event) => {
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    const index = event.target.dataset.index
+    const tile = rack[index];
+
+    if (grabbedTile !== null || tile === null) return;
+
     setGrabbedTile({
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
@@ -301,32 +303,54 @@ export default function GameContextProvider(props) {
       dragPosX: `${event.clientX - 35}px`,
       dragPosY: `${event.clientY - 30}px`,
     });
+    rack[index] = null;
+    setPlayers(newPlayers);
   }
 
-  const placeTileOnRack = (index, swapTiles = false) => {
+  const placeTileOnRack = (event) => {
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const index = target.dataset.index;
+
     if (grabbedTile === null) return;
     const newPlayers = cloneDeep(players);
     const rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
-    const swap = swapTiles 
+    
+    // If a tile is already on rack, store existing tile to swap with grabbedTile
+    const swapTile = rack[index] !== null 
       ? { 
         ...rack[index],
-        className: 'tile--grabbed'
+        className: 'tile--grabbed',
+        dragPosX: `${event.clientX - 35}px`,
+        dragPosY: `${event.clientY - 30}px`
       }
       : null;
+
     rack[index] = {
       ...grabbedTile,
       className: 'tile',
     };
     setPlayers(newPlayers);
-    setGrabbedTile(swapTiles ? swap : null);
+    setGrabbedTile(swapTile);
   }
 
-  const grabTileFromBoard = (event, tile, index) => {
+  const grabTileFromBoard = (event) => {
+    const [y, x] = get2dPos(event.target.dataset.index);
+
     if (
-      grabbedTile !== null 
-      || tile.played === true
+      grabbedTile !== null
+      || !board[y][x].tile
+      || board[y][x].tile.played === true
       || players[playerIndex].userId !== user.id
     ) return;
+    
+    setGrabbedTile({
+      ...board[y][x].tile,
+      letter: board[y][x].tile.points > 0 ? board[y][x].tile.letter : null,
+      className: 'tile--grabbed',
+      dragPosX: `${event.clientX - 35}px`,
+      dragPosY: `${event.clientY - 30}px`,
+    });
+
     const newBoard = cloneDeep(board).map(row => {
       return row.map(square => {
         if (square.tile && square.tile.className === 'tile--invalid') {
@@ -338,61 +362,62 @@ export default function GameContextProvider(props) {
       });
     })
 
-    const pos2d = get2dPos(index);
-    newBoard[pos2d[0]][pos2d[1]].tile = null;
+    newBoard[y][x].tile = null;
     setBoard(newBoard);
-    setGrabbedTile({
-      ...tile,
-      letter: tile.points > 0 ? tile.letter : null,
-      className: 'tile--grabbed',
-      grabbed: true,
-      dragPosX: `${event.clientX - 35}px`,
-      dragPosY: `${event.clientY - 30}px`,
-    });
   }
 
-  const placeTileOnBoard = (index, swapTiles = false) => {
-    const [y, x] = get2dPos(index);
+  const placeTileOnBoard = (event) => {
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+    const [y, x] = get2dPos(target.dataset.index);
     
     if (
       grabbedTile === null 
       || players[playerIndex].userId !== user.id
       || (board[y][x].tile && board[y][x].tile.played)
-      ) return;
+    ) return;
 
-    const newBoard = cloneDeep(board);
-    const swap = swapTiles
+    // If a tile is already on board, store existing tile to swap with grabbedTile
+    const swapTile = board[y][x].tile !== null
       ? {
-        ...newBoard[y][x].tile,
-        className: 'tile--grabbed'
+        ...board[y][x].tile,
+        className: 'tile--grabbed',
+        dragPosX: `${event.clientX - 35}px`,
+        dragPosY: `${event.clientY - 30}px`,
       }
       : null;
+
+    const newBoard = cloneDeep(board);
+
     newBoard[y][x].tile = {
       ...grabbedTile,
-      grabbed: false,
       className: 'tile'
     };
+
+    // Reset tile classNames
     newBoard.forEach(row => {
-      row.forEach(square => {
-        if (square.tile && square.tile.className === 'tile--invalid') {
-          square.tile.className = square.tile.played 
+      row.forEach(cell => {
+        if (cell.tile && cell.tile.className === 'tile--invalid') {
+          cell.tile.className = cell.tile.played 
             ? 'tile--played'
             : 'tile'
         }
       });
     })
+
     setBoard(newBoard);
+
     if (grabbedTile.letter === null) {
       setLetterSelectVisible(true);
     }
 
-    setGrabbedTile(swapTiles ? swap : null);
+    setGrabbedTile(swapTile);
   }
 
-  const selectTile = (e, tile, index) => {
+  const selectTile = (event) => {
     const newPlayers = cloneDeep(players);
     const tiles = newPlayers[playerIndex].tiles;
-    tiles[index].className = tile.className === 'tile--selected'
+    const index = event.target.dataset.index;
+    tiles[index].className = tiles[index].className === 'tile--selected'
       ? 'tile'
       : 'tile--selected'
 

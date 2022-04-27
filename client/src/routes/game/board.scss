@@ -18,7 +18,7 @@
   align-items: stretch;
 }
 
-@mixin square {
+@mixin cell {
   position: relative;
   margin: 1px;
   display: flex;
@@ -26,32 +26,32 @@
   justify-content: center;
 }
 
-.board__square {
+.board__cell {
   background-color: #E0EDFA;
-  @include square;
+  @include cell;
 }
 
-.board__square-center {
-  @include square;
+.board__cell-center {
+  @include cell;
   background-color: #A93249;
 }
 
-.board__square-triple-word {
-  @include square;
+.board__cell-triple-word {
+  @include cell;
   background-color: #F06A13;
 }
 
-.board__square-double-word {
-  @include square;
+.board__cell-double-word {
+  @include cell;
   background-color: #A93249;
 }
 
-.board__square-triple-letter {
-  @include square;
+.board__cell-triple-letter {
+  @include cell;
   background-color: #619437;
 }
 
-.board__square-double-letter {
-  @include square;
+.board__cell-double-letter {
+  @include cell;
   background-color: #4B9DCC;
 }

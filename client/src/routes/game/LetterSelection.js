@@ -7,15 +7,19 @@ export default function LetterSelection() {
   const { selectLetter } = useContext(GameContext);
 
   const allTiles = getAllTiles();
+  
   return (
     <div className="letter-selection-overlay">
       <div className="letter-selection">
         {allTiles.map((tile, i) => (
-          <Tile
-            tile={tile}
-            handlePointerDown={() => selectLetter(tile.letter)}
+          <div 
+            onPointerDown={() => selectLetter(tile.letter)}
             key={i}
-          />
+          >
+            <Tile
+              tile={tile}
+            />
+          </div>
         ))}
       </div>
     </div>

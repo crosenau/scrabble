@@ -122,103 +122,90 @@ const drawTiles = (tileBag, playerTiles) => {
 };
 
 // Board
-const createSquare = ({ className, text, letterScoreMod, wordScoreMod, index }) => {
-  return {
-    className,
-    text,
-    letterScoreMod,
-    wordScoreMod,
-    tile: null,
-    index
-  };
-};
-
-// Square types
-const normal = (i) => {
-  return createSquare({
-    className: 'board__square',
+const cellTypes = [
+  {    
+    className: 'board__cell',
     text: null,
     letterScoreMod: null,
     wordScoreMod: null,
-    index: i
-  });
-};
-const center = (i) => {
-  return createSquare({
-    className: 'board__square-center',
+    index: null,
+    tile: null
+  },
+  {
+    className: 'board__cell-center',
     text: null,
     letterScoreMod: null,
     wordScoreMod: 2,
-    index: i
-  });
-};
-const tripleWord = (i) => {
-  return createSquare({
-    className: 'board__square-triple-word',
+    index: null,
+    tile: null
+  },
+  {
+    className: 'board__cell-triple-word',
     text: 'TW',
     letterScoreMod: null,
     wordScoreMod: 3,
-    index: i
-  });
-};
-const doubleWord = (i) => {
-  return createSquare({
-    className: 'board__square-double-word',
+    index: null,
+    tile: null
+  },
+  {
+    className: 'board__cell-double-word',
     text: 'DW',
     letterScoreMod: null,
     wordScoreMod: 2,
-    index: i
-  });
-};
-const tripleLetter = (i) => {
-  return createSquare({
-    className: 'board__square-triple-letter',
+    index: null,
+    tile: null
+  },
+  {
+    className: 'board__cell-triple-letter',
     text: 'TL',
     letterScoreMod: 3,
     wordScoreMod: null,
-    index: i
-  });
-};
-const doubleLetter = (i) => {
-  return createSquare({
-    className: 'board__square-double-letter',
+    index: null,
+    tile: null
+  },
+  {
+    className: 'board__cell-double-letter',
     text: 'DL',
     letterScoreMod: 2,
     wordScoreMod: null,
-    index: i
-  });
-};
-
-// Length of rows and columns of board (15x15)
-const boardSize = 15;
+    index: null,
+    tile: null
+  }
+];
 
 const createEmptyBoard = () => {
+  const [a, b, c, d, e, f] = cellTypes;
   let board = [
-    [tripleWord, normal, normal, doubleLetter, normal, normal, normal, tripleWord, normal, normal, normal, doubleLetter, normal, normal, tripleWord],
-    [normal, doubleWord, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, doubleWord, normal],
-    [normal, normal, doubleWord, normal, normal, normal, doubleLetter, normal, doubleLetter, normal, normal, normal, doubleWord, normal, normal],
-    [doubleLetter, normal, normal, doubleWord, normal, normal, normal, doubleLetter, normal, normal, normal, doubleWord, normal, normal, doubleLetter],
-    [normal, normal, normal, normal, doubleWord, normal, normal, normal, normal, normal, doubleWord, normal, normal, normal, normal],
-    [normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal],
-    [normal, normal, doubleLetter, normal, normal, normal, doubleLetter, normal, doubleLetter, normal, normal, normal, doubleLetter, normal, normal],
-    [tripleWord, normal, normal, doubleLetter, normal, normal, normal, center, normal, normal, normal, doubleLetter, normal, normal, tripleWord],
-    [normal, normal, doubleLetter, normal, normal, normal, doubleLetter, normal, doubleLetter, normal, normal, normal, doubleLetter, normal, normal],
-    [normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal],
-    [normal, normal, normal, normal, doubleWord, normal, normal, normal, normal, normal, doubleWord, normal, normal, normal, normal],
-    [doubleLetter, normal, normal, doubleWord, normal, normal, normal, doubleLetter, normal, normal, normal, doubleWord, normal, normal, doubleLetter],
-    [normal, normal, doubleWord, normal, normal, normal, doubleLetter, normal, doubleLetter, normal, normal, normal, doubleWord, normal, normal],
-    [normal, doubleWord, normal, normal, normal, tripleLetter, normal, normal, normal, tripleLetter, normal, normal, normal, doubleWord, normal],
-    [tripleWord, normal, normal, doubleLetter, normal, normal, normal, tripleWord, normal, normal, normal, doubleLetter, normal, normal, tripleWord],
+    [c, a, a, f, a, a, a, c, a, a, a, f, a, a, c],
+    [a, d, a, a, a, e, a, a, a, e, a, a, a, d, a],
+    [a, a, d, a, a, a, f, a, f, a, a, a, d, a, a],
+    [f, a, a, d, a, a, a, f, a, a, a, d, a, a, f],
+    [a, a, a, a, d, a, a, a, a, a, d, a, a, a, a],
+    [a, e, a, a, a, e, a, a, a, e, a, a, a, e, a],
+    [a, a, f, a, a, a, f, a, f, a, a, a, f, a, a],
+    [c, a, a, f, a, a, a, b, a, a, a, f, a, a, c],
+    [a, a, f, a, a, a, f, a, f, a, a, a, f, a, a],
+    [a, e, a, a, a, e, a, a, a, e, a, a, a, e, a],
+    [a, a, a, a, d, a, a, a, a, a, d, a, a, a, a],
+    [f, a, a, d, a, a, a, f, a, a, a, d, a, a, f],
+    [a, a, d, a, a, a, f, a, f, a, a, a, d, a, a],
+    [a, d, a, a, a, e, a, a, a, e, a, a, a, d, a],
+    [c, a, a, f, a, a, a, c, a, a, a, f, a, a, c],
   ];
 
   board.forEach((row, rowIndex) => {
-    row.forEach((square, colIndex) => {
-      board[rowIndex][colIndex] = square((rowIndex * boardSize) + colIndex);
+    row.forEach((cell, cellIndex) => {
+      board[rowIndex][cellIndex] = {
+        ...cell,
+        index: (rowIndex * row.length) + cellIndex
+      };
     })
-  })
+  });
 
   return board;
 };
+
+const boardSize = 15;
 
 /**
  * Convert a square's index to a 2d coordinate [row, colum] on board
@@ -233,7 +220,6 @@ const get2dPos = (index) => [floor(index / boardSize), index % boardSize];
  * @returns {Boolean}
  */
 const isValidPlacement = (board) => {
-  console.log('isValidPlacement');
   // Check that center tile is filled
   if (!board[7][7].tile) {
     console.log('Center square is not filled');
@@ -344,30 +330,6 @@ const getUnplayedTileCoords = (board) => {
   return unplayedTileCoords;
 };
 
-/**
- * Filter board squares based on a filter function and then edit them based on an edit function.
- * @param {array} board 
- * @param {function} filter 
- * @param {function} edit 
- */
-const editBoardByFilter = (board, filter, edit) => {
-  for (let row of board) {
-    for (let square of row) {
-      if (filter(square) === true) {
-        edit(square);
-      }
-    }
-  }
-}
-
-const editBoardByIndices = (board, indices, edit) => {
-  const iterable = typeof indices === 'number' ? [indices] : indices;
-  for (let index of iterable) {
-    const pos2d = get2dPos(index);
-    edit(board[pos2d[0]][pos2d[1]]);
-  }
-}
-
 const getPlacedTiles = (board) => {
   const squares = board.flat().map(square => {
     if (square.tile) {
@@ -428,8 +390,6 @@ export {
   isValidPlacement,
   getPlayableWords,
   getUnplayedTileCoords,
-  editBoardByFilter,
-  editBoardByIndices,
   getPlacedTiles,
   addTilesToBoard,
   recallTilesFromBoard

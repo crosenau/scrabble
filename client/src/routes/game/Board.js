@@ -5,7 +5,7 @@ import Tile from './Tile';
 import './board.scss';
 
 export default function Board() {
-  const { board, grabTileFromBoard, placeTileOnBoard, players, turns } = useContext(GameContext);
+  const { board, players, turns } = useContext(GameContext);
   const { user } = useContext(UserContext);
 
   const isPlayersTurn = players[turns % players.length].userId === user.id;
@@ -18,34 +18,26 @@ export default function Board() {
         cursor: 'default'
       }}
     >
-    {board.flat().map((square, i) => {
-      return square.tile ? (
-        <div className={square.className} key={i}>
+    {board.flat().map((cell) => (
+      <div 
+        className={cell.className}
+        data-index={cell.index}
+        key={cell.index}
+      >
+        {cell.tile ? 
           <Tile 
-            handlePointerDown={grabTileFromBoard}
-            handlePointerUp={placeTileOnBoard}
-            tile={square.tile}
+            tile={cell.tile}
             style={{ 
               position: 'absolute',
               transform: 'scale(0.98)'
             }}
-            index={i}
-            fromRack={false}
           />
-        </div>
-      )
-      : (
-      <div 
-        className={square.className} 
-        //onPointerUp={() => placeTileOnBoard(i)}
-        onMouseUp={() => placeTileOnBoard(i)}
-        onTouchEnd={() => placeTileOnBoard(i)}
-        key={i}
-      >
-        {square.text}
+        : 
+          cell.text 
+        }
       </div>
-      );
-    })}
+      
+    ))}
     </div>
   );
 }

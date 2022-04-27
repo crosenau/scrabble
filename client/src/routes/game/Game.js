@@ -20,8 +20,35 @@ export default function Game() {
     recallTiles,
     shuffleTiles,
     toggleIsTradingTiles,
-    tradeSelectedTiles
+    tradeSelectedTiles,
+    grabTileFromRack,
+    grabTileFromBoard,
+    placeTileOnBoard,
+    placeTileOnRack,
+    selectTile
   } = useContext(GameContext);
+
+  const pointerDownHandler = (event) => {
+    if (event.target.className === 'rack__cell') {
+      if (isTradingTiles) {
+        selectTile(event);
+      } else {
+        grabTileFromRack(event);
+      }
+    } else if (event.target.className.includes('board__cell')) {
+      grabTileFromBoard(event);
+    }
+  }
+
+  const pointerUpHandler = (event) => {
+    const target = document.elementFromPoint(event.clientX, event.clientY);
+
+    if (target.className === 'rack__cell') {
+      placeTileOnRack(event);
+    } else if (target.className.includes('board__cell')) {
+      placeTileOnBoard(event);
+    }
+  }
 
   const isReady = tileBag !== null;
   
@@ -31,7 +58,12 @@ export default function Game() {
   }
   
   return (
-    <div className="game" onMouseMove={(e) => moveGrabbedTile(e)}>
+    <div 
+      className="game"
+      onPointerDown={pointerDownHandler}
+      onPointerMove={moveGrabbedTile}
+      onPointerUp={pointerUpHandler}
+    >
       <div className="game__left">
         <PlayerList />
         <div className="turn-buttons">
@@ -55,7 +87,10 @@ export default function Game() {
       { grabbedTile ? (
         <Tile
           tile={grabbedTile}
-          style={{ top:grabbedTile.dragPosY, left:grabbedTile.dragPosX }}
+          style={{
+            top: grabbedTile.dragPosY, 
+            left: grabbedTile.dragPosX
+          }}
         />
       ) : null }
       { letterSelectVisible ? <LetterSelection /> : null }
