@@ -26,9 +26,10 @@
 // Game List
 .game-list {
   @include mixins.panel;
+  font-size: 1rem;
   padding: 0 1.5rem 1.5rem 1.5rem;
-  width: 60vw;
-  height: calc(100vh - 12rem);
+  width: 60%;
+  height: 80%;
   position: relative;
   user-select: none;
   display: flex;
@@ -37,7 +38,7 @@
 
 .game-list__headers, .game-list__rows {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: 35% 20% 25% 20%;
   align-items: center;
 }
 
@@ -49,7 +50,7 @@
   
   & > hr {
     width: 100%;
-    grid-column: 1 / 6;
+    grid-column: 1 / 5;
   }
 }
 
@@ -62,22 +63,29 @@
   
   & > div {
     color: white;
-    padding: 0.6rem 0;
+    overflow: hidden;
+    white-space: nowrap;
   }
   
   &:hover > div {
     background-color: #aaa4;
   }
+}
 
-  // & > button {
-  //   color: white;
-  //   background-color: #282;
-  //   border: none;
-  //   border-radius: 0.4rem;
-  // }
-
-  // & > button:hover {
-  //   color: black;
-  //   background-color: #494;
-  // }
+@media (max-aspect-ratio: 4 / 5) {
+  .game-list {
+    font-size: 0.8rem;
+    padding: 0 1rem 1rem 1rem;
+    width: 80%;
+    height: 70%;
+    margin-bottom: 15%;
+    
+    & button {
+      font-size: 0.6em;
+    }
+  }
+  
+  .game-list__rows {
+    grid-row-gap: 1rem;
+  }
 }

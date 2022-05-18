@@ -7,9 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "server-dev": "nodemon server.js --ignore data/db.json",
+    "server-dev": "NODE_ENV=development nodemon server.js --ignore data/db.json",
     "client-dev": "npm run start --prefix client",
-    "dev": "concurrently \"npm run server-dev\" \"npm run client-dev\""
+    "dev": "concurrently \"npm run client-dev\" \"npm run server-dev\""
   },
   "repository": {
     "type": "git",

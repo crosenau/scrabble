@@ -60,6 +60,9 @@
 
 
 @media (max-width: 640px) {
+  .nav {
+    flex-shrink: 0;
+  }
   .nav__logo, .nav__items {
     display: none;
   }

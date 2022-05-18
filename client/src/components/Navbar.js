@@ -30,6 +30,7 @@ export default function Navbar() {
           <NavLink 
             to="/newgame" 
             className={({isActive}) => isActive ? 'nav__vertical-item--active' : 'nav__vertical-item'}
+            onClick={toggleMenu}
           >
             New Game
           </NavLink>
@@ -38,6 +39,7 @@ export default function Navbar() {
           <NavLink 
             to="/mygames" 
             className={({isActive}) => isActive ? 'nav__vertical-item--active' : 'nav__vertical-item'}
+            onClick={toggleMenu}
           >
             My Games
           </NavLink>
@@ -46,6 +48,7 @@ export default function Navbar() {
           <NavLink 
             to="/publicgames" 
             className={({isActive}) => isActive ? 'nav__vertical-item--active' : 'nav__vertical-item'}
+            onClick={toggleMenu}
           >
             Public Games
           </NavLink>

@@ -64,7 +64,7 @@ export default function Game() {
       onPointerMove={moveGrabbedTile}
       onPointerUp={pointerUpHandler}
     >
-      <div className="game__left">
+      <div className="game__section-1">
         <PlayerList />
         <div className="turn-buttons">
           <GreenButton label="Skip" type="button" onClick={skipTurn} />
@@ -76,7 +76,7 @@ export default function Game() {
           <GreenButton label="Play" type="button" onClick={playWords} />
         </div>
       </div>
-      <div className="game__right">
+      <div className="game__section-2">
         <Board />
         <Rack />
         <div className="tile-buttons">

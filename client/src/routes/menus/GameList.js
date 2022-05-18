@@ -11,10 +11,9 @@ export default function GameList({ games, buttonLabel }) {
   return (
     <div className="game-list">
       <div className="game-list__headers">
-        <div>Game Name</div>
+        <div>Name</div>
         <div>Players</div>
-        <div>Last Activity</div>
-        <div>Played Turns</div>
+        <div>Last Move</div>
         <div></div>
         <hr />
       </div>
@@ -26,7 +25,6 @@ export default function GameList({ games, buttonLabel }) {
               {`${game.players.filter(player => player.userId !== null).length}/${game.players.length}`}
             </div>
             <div>{game.lastActivity || '?'}</div>
-            <div>{game.turns}</div>
             <GreenButton
               label={buttonLabel}
               type="button" 

@@ -21,8 +21,10 @@ if (process.env.NODE_ENV === 'production') {
   app.use('/', express.static(join(__dirname, '/client/build')));
 }
 
-const server = app.listen(process.env.PORT, () => {
-  console.log(`Listening on port ${process.env.PORT}`);
+const port = process.env.SERVER_PORT;
+
+const server = app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
 
 const io = new SocketIO(server, {

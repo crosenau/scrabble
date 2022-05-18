@@ -36,6 +36,7 @@ export default function GameContextProvider(props) {
   const [emit, setEmit] = useState(false);
   
   const playerIndex = turns % players.length;
+  const grabbedTileOffset = Math.min(window.innerWidth, window.innerHeight) / 30;
 
   useEffect(() => {
     if (gameState) {
@@ -131,8 +132,8 @@ export default function GameContextProvider(props) {
   const moveGrabbedTile = (event) => {
     if (!grabbedTile) return;
     const newGrabbedTile = { ...grabbedTile };
-    newGrabbedTile.dragPosX = `${event.clientX - 35}px`;
-    newGrabbedTile.dragPosY = `${event.clientY - 30}px`;
+    newGrabbedTile.dragPosX = `${event.clientX - grabbedTileOffset}px`;
+    newGrabbedTile.dragPosY = `${event.clientY - grabbedTileOffset}px`;
     setGrabbedTile(newGrabbedTile);
   };
 
@@ -300,8 +301,8 @@ export default function GameContextProvider(props) {
       ...tile,
       letter: tile.points > 0 ? tile.letter : null,
       className: 'tile--grabbed',
-      dragPosX: `${event.clientX - 35}px`,
-      dragPosY: `${event.clientY - 30}px`,
+      dragPosX: `${event.clientX - grabbedTileOffset}px`,
+      dragPosY: `${event.clientY - grabbedTileOffset}px`,
     });
     rack[index] = null;
     setPlayers(newPlayers);
@@ -320,8 +321,8 @@ export default function GameContextProvider(props) {
       ? { 
         ...rack[index],
         className: 'tile--grabbed',
-        dragPosX: `${event.clientX - 35}px`,
-        dragPosY: `${event.clientY - 30}px`
+        dragPosX: `${event.clientX - grabbedTileOffset}px`,
+        dragPosY: `${event.clientY - grabbedTileOffset}px`
       }
       : null;
 
@@ -335,7 +336,7 @@ export default function GameContextProvider(props) {
 
   const grabTileFromBoard = (event) => {
     const [y, x] = get2dPos(event.target.dataset.index);
-
+    
     if (
       grabbedTile !== null
       || !board[y][x].tile
@@ -347,8 +348,8 @@ export default function GameContextProvider(props) {
       ...board[y][x].tile,
       letter: board[y][x].tile.points > 0 ? board[y][x].tile.letter : null,
       className: 'tile--grabbed',
-      dragPosX: `${event.clientX - 35}px`,
-      dragPosY: `${event.clientY - 30}px`,
+      dragPosX: `${event.clientX - grabbedTileOffset}px`,
+      dragPosY: `${event.clientY - grabbedTileOffset}px`,
     });
 
     const newBoard = cloneDeep(board).map(row => {
@@ -381,8 +382,8 @@ export default function GameContextProvider(props) {
       ? {
         ...board[y][x].tile,
         className: 'tile--grabbed',
-        dragPosX: `${event.clientX - 35}px`,
-        dragPosY: `${event.clientY - 30}px`,
+        dragPosX: `${event.clientX - grabbedTileOffset}px`,
+        dragPosY: `${event.clientY - grabbedTileOffset}px`,
       }
       : null;
 

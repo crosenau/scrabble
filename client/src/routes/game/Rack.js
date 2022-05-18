@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
-import './rack.scss';
+import './game.scss';
 
 export default function Rack() {
   const { players } = useContext(GameContext);
@@ -22,7 +22,6 @@ export default function Rack() {
           <div 
             className="rack__cell"
             data-index={i}
-            style={{ transform: 'scale(1.2)' }}
             key={i}
           >
             {tile 

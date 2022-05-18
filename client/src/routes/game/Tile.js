@@ -1,4 +1,4 @@
-import './tile.scss';
+import './game.scss';
 
 export default function Tile({ tile, style }) {
     return (
