@@ -1,4 +1,5 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Board from './Board';
 import Rack from './Rack';
 import Tile from './Tile';
@@ -6,6 +7,7 @@ import GreenButton from '../../components/GreenButton';
 import PlayerList from './PlayerList';
 import LetterSelection from './LetterSelection';
 import { GameContext } from '../../contexts/GameContext';
+import { SocketContext } from '../../contexts/SocketContext';
 import './game.scss';
 
 export default function Game() {
@@ -27,6 +29,14 @@ export default function Game() {
     placeTileOnRack,
     selectTile
   } = useContext(GameContext);
+  const { getGame, isOnline } = useContext(SocketContext);
+  const { gameId } = useParams();
+
+  useEffect(() => {
+    if (isOnline) {
+      getGame(gameId);
+    }
+  }, [isOnline, gameId]);
 
   const pointerDownHandler = (event) => {
     if (event.target.className === 'rack__cell') {
@@ -49,9 +59,9 @@ export default function Game() {
       placeTileOnBoard(event);
     }
   }
-
-  const isReady = tileBag !== null;
   
+  const isReady = tileBag !== null;
+
   if (!isReady) {
     console.log('not ready')
     return <div className="game">Loading...</div>

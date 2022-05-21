@@ -66,6 +66,10 @@ export default function SocketContextProvider(props) {
     }
   }
 
+  const getGame = (gameId) => {
+    socket.emit('getGame', gameId);
+  }
+
   const getMyGames = (userId) => {
     socket.emit('getMyGames', userId);
   }
@@ -82,6 +86,7 @@ export default function SocketContextProvider(props) {
       gameState,
       putUser,
       putGame,
+      getGame,
       getMyGames,
       setMyGames,
       getPublicGames,

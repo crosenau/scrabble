@@ -8,13 +8,10 @@ import {
   getPlayableWords,
   getPlacedTiles,
   addTilesToBoard,
-  createTileBag,
   drawTiles,
-  recallTilesFromBoard,
-  createTestBag
+  recallTilesFromBoard
 } from '../utils/gameUtils';
 import { isWord } from '../utils/dictionary';
-import { v4 as uuidv4 } from 'uuid';
 import { cloneDeep, shuffle } from 'lodash';
 
 export const GameContext = createContext();
@@ -39,6 +36,7 @@ export default function GameContextProvider(props) {
   const grabbedTileOffset = Math.min(window.innerWidth, window.innerHeight) / 30;
 
   useEffect(() => {
+    console.log('gameState received');
     if (gameState) {
       setGameState(gameState);
     }
@@ -62,44 +60,12 @@ export default function GameContextProvider(props) {
     setEmit(null);
   }, [emit]);
 
-  const createGame = (name, numPlayers) => {
-    let tileBag = createTileBag();
-    let players = [
-      {
-        userId: user.id,
-        userName: user.name,
-        tiles: tileBag.splice(0, 7),
-        score: 0
-      }
-    ]
-
-    for (let x = 1; x < numPlayers; x++) {
-      players.push({
-        userId: null,
-        userName: '',
-        tiles: tileBag.splice(0, 7),
-        score: 0
-      });
-    }
-
-    const initialState = {
-      name,
-      id: uuidv4(),
-      boardTiles: getPlacedTiles(createEmptyBoard()),
-      tileBag,
-      turns: 0,
-      players,
-      gameOver: false
-    };
-
-    setGameState(initialState, true);
-  };
-
   const setGameState = (game, emitAfter = false) => {
     console.log('setGameState', emitAfter);
     try {
       if (user.id && !game.players.some(player => player.userId === user.id)) {
         console.log(`user ${user.id} not in game. Adding.`);
+        emitAfter = true;
         const insertIndex = game.players.findIndex(player => player.userId === null);
         if (insertIndex === -1) {
           throw new Error('Game is full');
@@ -122,6 +88,7 @@ export default function GameContextProvider(props) {
       setIsTradingTiles(false);
       setGameOver(game.gameOver);
       if (emitAfter) {
+        console.log('emitting gameState');
         setEmit(true);
       }
     } catch(error) {
@@ -509,7 +476,6 @@ export default function GameContextProvider(props) {
       turns,
       gameOver,
       setGameState,
-      createGame,
       grabTileFromRack,
       placeTileOnRack,
       grabTileFromBoard,

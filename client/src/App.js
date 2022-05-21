@@ -23,7 +23,7 @@ export default function App() {
               <Route path="/newgame" element={<PrivateRoute component={NewGame} />} />
               <Route path="/mygames" element={<PrivateRoute component={MyGames} />} />
               <Route path="/publicgames" element={<PrivateRoute component={PublicGames} />} />
-              <Route path="/game" element={<PrivateRoute component={Game} />} />
+              <Route path="/game/:gameId" element={<PrivateRoute component={Game} />} />
             </Routes>
           </GameContextProvider>
         </UserContextProvider>

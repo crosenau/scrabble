@@ -9,7 +9,7 @@
     "start": "node server.js",
     "server-dev": "NODE_ENV=development nodemon server.js --ignore data/db.json",
     "client-dev": "npm run start --prefix client",
-    "dev": "concurrently \"npm run client-dev\" \"npm run server-dev\""
+    "dev": "concurrently --kill-others \"npm run client-dev\" \"npm run server-dev\""
   },
   "repository": {
     "type": "git",

@@ -1,18 +1,18 @@
 import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GameContext } from '../../contexts/GameContext';
+import { v4 as uuidv4 } from 'uuid';
 import { UserContext } from '../../contexts/UserContext';
+import { SocketContext } from '../../contexts/SocketContext';
+import { createTileBag, createTestBag } from '../../utils/gameUtils';
 import GreenButton from '../../components/GreenButton';
 import './menus.scss'
 
 export default function Menu() {
-  const { createGame } = useContext(GameContext);
   const { user } = useContext(UserContext);
-  const navigate = useNavigate();
-  
+  const { putGame } = useContext(SocketContext);
+  const navigate = useNavigate();  
   const [name, setName] = useState('');
   const [numPlayers, setNumPlayers] = useState(2);
-
 
   const handleNameChange = (event) => {
     setName(event.target.value);
@@ -22,13 +22,48 @@ export default function Menu() {
     setNumPlayers(event.target.value);
   };
 
+  const createGame = (name, numPlayers) => {
+    let tileBag = createTileBag();
+    let players = [
+      {
+        userId: user.id,
+        userName: user.name,
+        tiles: tileBag.splice(0, 7),
+        score: 0
+      }
+    ];
+
+    for (let x = 1; x < numPlayers; x++) {
+      players.push({
+        userId: null,
+        userName: '',
+        tiles: tileBag.splice(0, 7),
+        score: 0
+      });
+    }
+
+    const game = {
+      name,
+      id: uuidv4(),
+      boardTiles: [],
+      tileBag,
+      turns: 0,
+      players,
+      gameOver: false
+    };
+
+    return game;
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     if (name !== '') {
-      createGame(name, numPlayers);
-      navigate('../game');
+      const newGame = createGame(name, numPlayers);
+      
+      putGame(newGame);
+      navigate(`../game/${newGame.id}`);
     }
-  }
+  };
 
   return (
     <div className="menu">

@@ -33,6 +33,24 @@ const io = new SocketIO(server, {
   }
 });
 
+// Subscribe a socket to a game's room to receive state changes
+const joinRoom = (socket, roomId) => {
+  if (socket.rooms.has(roomId)) {
+    console.log(`already in room ${roomId}`);
+    return;
+  };
+
+  for (let room of socket.rooms.values()) {
+    if (room !== socket.id) {
+      console.log(`leaving room: ${room}`);
+      socket.leave(room);
+    }
+  }
+  
+  console.log(`joining room: ${roomId}`);
+  socket.join(roomId);
+}
+
 io.on('connection', (socket) => {
   console.log('New socket connection: ', socket.id);
 
@@ -75,33 +93,27 @@ io.on('connection', (socket) => {
 
     await db.write();
 
-    if (!socket.rooms.has(data.id)) {
-      for (let room of socket.rooms.values()) {
-        console.log(`leaving room: ${room}`);
-        socket.leave(room);
-      }
-      console.log(`joining room: ${data.id}`);
-      socket.join(data.id);
-    }
+    joinRoom(socket, data.id);
 
     socket.to(data.id).emit('gameState', data);
     cb('ok');
   });
 
-  socket.on('joinRoom', (id, ack) => {
-    console.log('joinRoom', id);
-    for (let room of socket.rooms.values()) {
-      console.log(`leaving room: ${room}`);
-      socket.leave(room);
-    }
-    console.log(`joining room: ${data.id}`);
-    socket.join(data.id);
+  // Triggers server to emit 'gameState' with requested id
+  socket.on('getGame', gameId => {
+    console.log('getGame', gameId);
+    if (db.data.games.length === 0) return;
 
-    cb('ok');
+    const game = db.data.games.filter(game => game.id === gameId)[0];    
+    
+    if (game) {
+      joinRoom(socket, gameId);
+      socket.emit('gameState', game);
+    }
   });
 
   socket.on('getMyGames', userId => {
-    console.log('getMyGames')
+    console.log('getMyGames', userId)
     if (db.data.games.length === 0) return;
 
     const gameList = db.data.games

@@ -29,8 +29,7 @@ export default function GameList({ games, buttonLabel }) {
               label={buttonLabel}
               type="button" 
               onClick={() => {
-                setGameState(game, true);
-                navigate('../game');
+                navigate(`../game/${game.id}`);
               }} />
           </div>
         ))}
