@@ -127,9 +127,9 @@ export default function GameContextProvider(props) {
     if (!isValidPlacement(board)) {
       alert('Invalid Move');
       newBoard.forEach(row => {
-        row.forEach(square => {
-          if (square.tile && !square.tile.played) {
-            square.tile.className = 'tile--invalid';
+        row.forEach(cell => {
+          if (cell.tile && cell.tile.playedTurn === null) {
+            cell.tile.className = 'tile--invalid';
           }
         });
       })
@@ -141,9 +141,9 @@ export default function GameContextProvider(props) {
     if (playedWords.length === 0) {
       alert('no played words');
       newBoard.forEach(row => {
-        row.forEach(square => {
-          if (square.tile && !square.tile.played) {
-            square.tile.className = 'tile--invalid';
+        row.forEach(cell => {
+          if (cell.tile && cell.tile.playedTurn === null) {
+            cell.tile.className = 'tile--invalid';
           }
         });
       })
@@ -152,7 +152,7 @@ export default function GameContextProvider(props) {
     }
 
     const invalidWords = playedWords.reduce((prevWords, word) => {
-      const text = word.map(square => square.tile.letter).join('');
+      const text = word.map(cell => cell.tile.letter).join('');
       console.log('isWord ', text, isWord(text));
       if (!isWord(text)) {
         return [...prevWords, word]
@@ -162,15 +162,15 @@ export default function GameContextProvider(props) {
 
     if (invalidWords.length > 0) {
       invalidWords.forEach(word => {
-        const text = word.map(square => square.tile.letter).join('');
-        const indices = word.map(square => square.index);
+        const text = word.map(cell => cell.tile.letter).join('');
+        const indices = word.map(cell => cell.index);
         alert(`${text} is not a valid word`);
         newBoard = newBoard.map(row => {
-          return row.map(square => {
-            if (square.tile && indices.includes(square.index)) {
-              square.tile.className = 'tile--invalid';
+          return row.map(cell => {
+            if (cell.tile && indices.includes(cell.index)) {
+              cell.tile.className = 'tile--invalid';
             }
-            return square;
+            return cell;
           });
         })
         setBoard(newBoard);
@@ -181,24 +181,24 @@ export default function GameContextProvider(props) {
     let playerScore = players[playerIndex].score;
 
     // Set className for previously scored tiles
-    newBoard.flat().forEach(square => {
-      if (square.tile && square.tile.played) {
-        square.tile.className = 'tile--played';
-        square.tile.totalPoints = null;
+    newBoard.flat().forEach(cell => {
+      if (cell.tile && cell.tile.playedTurn !== null) {
+        cell.tile.className = 'tile--played';
+        cell.tile.totalPoints = null;
       }
     });
 
     // Update new played tiles
     playedWords.forEach(word => {
-      const indices = word.map(square => square.index);
+      const indices = word.map(cell => cell.index);
       const score = scoreWord(word);
-      newBoard.flat().forEach(square => {
-        if (square.tile && indices.includes(square.index)) {
-          square.tile.className = 'tile--scored';
-          square.tile.played = true;
-          square.tile.totalPoints = square.index === indices[indices.length-1]
+      newBoard.flat().forEach(cell => {
+        if (cell.tile && indices.includes(cell.index)) {
+          cell.tile.className = 'tile--scored';
+          cell.tile.playedTurn = turns;
+          cell.tile.totalPoints = cell.index === indices[indices.length-1]
             ? score
-            : square.tile.totalPoints
+            : cell.tile.totalPoints
         }
       });
       playerScore += score;
@@ -237,16 +237,16 @@ export default function GameContextProvider(props) {
     let wordScoreMod = 1;
     let score = 0;
     let playedTiles = 0;
-    word.forEach(square => {
-      if (square.letterScoreMod && !square.tile.played) {
-        score += (square.tile.points * square.letterScoreMod);
+    word.forEach(cell => {
+      if (cell.letterScoreMod && cell.tile.playedTurn === null) {
+        score += (cell.tile.points * cell.letterScoreMod);
       } else {
-        score += square.tile.points;
+        score += cell.tile.points;
       }
-      if (square.wordScoreMod && !square.tile.played) {
-        wordScoreMod = square.wordScoreMod;
+      if (cell.wordScoreMod && cell.tile.playedTurn === null) {
+        wordScoreMod = cell.wordScoreMod;
       }
-      if (!square.tile.played) {
+      if (cell.tile.playedTurn === null) {
         playedTiles += 1;
       }
     });
@@ -307,7 +307,7 @@ export default function GameContextProvider(props) {
     if (
       grabbedTile !== null
       || !board[y][x].tile
-      || board[y][x].tile.played === true
+      || board[y][x].tile.playedTurn !== null
       || players[playerIndex].userId !== user.id
     ) return;
     
@@ -319,14 +319,24 @@ export default function GameContextProvider(props) {
       dragPosY: `${event.clientY - grabbedTileOffset}px`,
     });
 
+    // Reset classNames for tiles marked as invalid
+    const lastPlayedTurn = board
+      .flat()
+      .map(cell => cell.tile ? cell.tile.playedTurn : 0)
+      .reduce((a, b) => a > b ? a : b);
     const newBoard = cloneDeep(board).map(row => {
-      return row.map(square => {
-        if (square.tile && square.tile.className === 'tile--invalid') {
-          square.tile.className = square.tile.played 
-            ? 'tile--played'
-            : 'tile'
+      return row.map(cell => {
+        if (cell.tile && cell.tile.className === 'tile--invalid') {
+          if (cell.tile.playedTurn === null) {
+            cell.tile.className = 'tile';
+          } else if (cell.tile.playedTurn === lastPlayedTurn) {
+            cell.tile.className = 'tile--scored';
+          } else {
+            cell.tile.className = 'tile--played';
+          }
         }
-        return square;
+
+        return cell;
       });
     })
 
@@ -341,7 +351,7 @@ export default function GameContextProvider(props) {
     if (
       grabbedTile === null 
       || players[playerIndex].userId !== user.id
-      || (board[y][x].tile && board[y][x].tile.played)
+      || (board[y][x].tile && board[y][x].tile.playedTurn !== null)
     ) return;
 
     // If a tile is already on board, store existing tile to swap with grabbedTile
@@ -361,13 +371,22 @@ export default function GameContextProvider(props) {
       className: 'tile'
     };
 
-    // Reset tile classNames
+    // Reset classNames for tiles marked as invalid
+    const lastPlayedTurn = board
+      .flat()
+      .map(cell => cell.tile ? cell.tile.playedTurn : 0)
+      .reduce((a, b) => a > b ? a : b);
+
     newBoard.forEach(row => {
       row.forEach(cell => {
         if (cell.tile && cell.tile.className === 'tile--invalid') {
-          cell.tile.className = cell.tile.played 
-            ? 'tile--played'
-            : 'tile'
+          if (cell.tile.playedTurn === null) {
+            cell.tile.className = 'tile';
+          } else if (cell.tile.playedTurn === lastPlayedTurn) {
+            cell.tile.className = 'tile--scored';
+          } else {
+            cell.tile.className = 'tile--played';
+          }
         }
       });
     })

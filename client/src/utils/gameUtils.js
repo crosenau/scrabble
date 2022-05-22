@@ -7,7 +7,7 @@ const createTile = (
   points = null,
   className = 'tile',
   totalPoints = null,
-  played = false,
+  playedTurn = null,
   dragPosX = null,
   dragPosY = null
 ) => {
@@ -16,7 +16,7 @@ const createTile = (
     points,
     className,
     totalPoints,
-    played,
+    playedTurn,
     dragPosX,
     dragPosY
   };
@@ -208,7 +208,7 @@ const createEmptyBoard = () => {
 const boardSize = 15;
 
 /**
- * Convert a square's index to a 2d coordinate [row, colum] on board
+ * Convert a cell's index to a 2d coordinate [row, colum] on board
  * @param {Number} index 
  * @returns 
  */
@@ -222,11 +222,11 @@ const get2dPos = (index) => [floor(index / boardSize), index % boardSize];
 const isValidPlacement = (board) => {
   // Check that center tile is filled
   if (!board[7][7].tile) {
-    console.log('Center square is not filled');
+    console.log('Center cell is not filled');
     return false;
   }
   const rowsWithNewTiles = board.reduce((allRows, row) => {
-    if (row.some(square => square.tile !== null && !square.tile.played)) {
+    if (row.some(cell => cell.tile !== null && cell.tile.playedTurn === null)) {
       return [...allRows, row]
     }
     return allRows;
@@ -234,7 +234,7 @@ const isValidPlacement = (board) => {
   const transposedBoard = board[0].map((_, colIndex) => (
     board.map(row => row[colIndex])));
   const colsWithNewTiles = transposedBoard.reduce((allCols, col) => {
-    if (col.some(square => square.tile !== null && !square.tile.played)) {
+    if (col.some(cell => cell.tile !== null && cell.tile.playedTurn === null)) {
       return [...allCols, col]
     }
     return allCols;
@@ -247,10 +247,10 @@ const isValidPlacement = (board) => {
   
   const largestLine = rowsWithNewTiles.length > colsWithNewTiles.length ?
     colsWithNewTiles[0]: rowsWithNewTiles[0];
-  const start = largestLine.findIndex(square => square.tile && !square.tile.played);
-  const end = findLastIndex(largestLine, (square) => square.tile && !square.tile.played);
+  const start = largestLine.findIndex(cell => cell.tile && cell.tile.playedTurn === null);
+  const end = findLastIndex(largestLine, (cell) => cell.tile && cell.tile.playedTurn === null);
 
-  if (largestLine.slice(start, end).some(square => !square.tile)) {
+  if (largestLine.slice(start, end).some(cell => !cell.tile)) {
     console.log('pieces must be placed to form a single word');
     return false;
   }
@@ -271,18 +271,18 @@ const getPlayableWords = (board) => {
     let potentialWord = [];
     let containsUnplayedTile = false;
 
-    line.forEach((square, i) => {
-      if (square.tile === null) {
+    line.forEach((cell, i) => {
+      if (cell.tile === null) {
         if (potentialWord.length > 1 && containsUnplayedTile) {
           words.push(potentialWord);
         }
         potentialWord = [];
         containsUnplayedTile = false;
-      } else if (square.tile !== null) {
-        if (!square.tile.played) {
+      } else if (cell.tile !== null) {
+        if (!cell.tile.playedTurn) {
           containsUnplayedTile = true;
         }
-        potentialWord.push(square);
+        potentialWord.push(cell);
       }
       if (
         i === boardSize - 1 
@@ -314,7 +314,7 @@ const getPlayableWords = (board) => {
 };
 
 /**
- * Return an array of 2d coordinates [row, column] for all board squares containing newly placed tiles.
+ * Return an array of 2d coordinates [row, column] for all board cells containing newly placed tiles.
  * @param {Array} board 
  * @returns Array
  */
@@ -322,7 +322,7 @@ const getUnplayedTileCoords = (board) => {
   let unplayedTileCoords = [];
   for (let row=0; row < board.length; row++) {
     for (let col=0; col < board[row].length; col++) {
-      if (board[row][col].tile !== null && !board[row][col].tile.played) {
+      if (board[row][col].tile !== null && !board[row][col].tile.playedTurn) {
         unplayedTileCoords.push([row, col]);
       }
     }
@@ -331,21 +331,21 @@ const getUnplayedTileCoords = (board) => {
 };
 
 const getPlacedTiles = (board) => {
-  const squares = board.flat().map(square => {
-    if (square.tile) {
-      return { tile: square.tile, index: square.index };
+  const cells = board.flat().map(cell => {
+    if (cell.tile) {
+      return { tile: cell.tile, index: cell.index };
     }
 
     return null;
-  }).filter(square => square !== null);
+  }).filter(cell => cell !== null);
 
-  return squares;
+  return cells;
 }
 
-const addTilesToBoard = (squares, board) => {
-  for (let square of squares) {
-    const [row, col] = get2dPos(square.index);
-    board[row][col].tile = square.tile;
+const addTilesToBoard = (cells, board) => {
+  for (let cell of cells) {
+    const [row, col] = get2dPos(cell.index);
+    board[row][col].tile = cell.tile;
   }
 
   return board;
@@ -357,17 +357,25 @@ const addTilesToBoard = (squares, board) => {
  * @param {array} playerTiles 
  */
 const recallTilesFromBoard = (board, playerTiles) => {
+  const lastPlayedTurn = board
+    .flat()
+    .map(cell => cell.tile ? cell.tile.playedTurn : 0)
+    .reduce((a, b) => a > b ? a : b);
+
   board.forEach(row => {
-    row.forEach(square => {
-      if (square.tile) {
-        if (square.tile.played && square.tile.className === 'tile--invalid') {
-          square.tile.className = square.tile.played 
-          ? 'tile--played'
-          : 'tile'
-        } else if (!square.tile.played) {
+    row.forEach(cell => {
+      if (cell.tile) {
+        // Reset classNames for tiles marked as invalid
+        if (cell.tile.playedTurn !== null && cell.tile.className === 'tile--invalid') {
+          if (cell.tile.playedTurn === lastPlayedTurn) {
+              cell.tile.className = 'tile--scored';
+          } else {
+            cell.tile.className = 'tile--played';
+          }
+        } else if (cell.tile.playedTurn === null) {
             const insertIndex = playerTiles.indexOf(null);
-            playerTiles[insertIndex] = square.tile;
-            square.tile = null;
+            playerTiles[insertIndex] = cell.tile;
+            cell.tile = null;
           }
       }
     })
