@@ -17,5 +17,4 @@ export default function Tile({ tile, style }) {
         </div>
       </div>
     );
-
 }

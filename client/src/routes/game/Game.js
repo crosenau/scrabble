@@ -13,6 +13,7 @@ import './game.scss';
 export default function Game() {
   const {
     tileBag,
+    turns,
     grabbedTile,
     letterSelectVisible,
     isTradingTiles,
@@ -76,6 +77,10 @@ export default function Game() {
     >
       <div className="game__section-1">
         <PlayerList />
+        <div className="info">
+          <div>Tiles: {tileBag.length+1}</div>
+          <div>Turn: {turns+1}</div>
+        </div>
         <div className="turn-buttons">
           <GreenButton label="Skip" type="button" onClick={skipTurn} />
           { isTradingTiles
