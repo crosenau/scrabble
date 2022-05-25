@@ -1,12 +1,8 @@
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GreenButton from '../../components/GreenButton';
-import { GameContext } from '../../contexts/GameContext';
-
 
 export default function GameList({ games, buttonLabel }) {
   const navigate = useNavigate();
-  const { setGameState } = useContext(GameContext);
 
   return (
     <div className="game-list">

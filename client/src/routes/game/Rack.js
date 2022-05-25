@@ -1,11 +1,9 @@
 import { useContext } from 'react';
-import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
 import './game.scss';
 
-export default function Rack() {
-  const { players } = useContext(GameContext);
+export default function Rack({ players }) {
   const { user } = useContext(UserContext);
   const tiles = players.filter(player => player.userId === user.id)[0].tiles;
   const numTiles = 7;

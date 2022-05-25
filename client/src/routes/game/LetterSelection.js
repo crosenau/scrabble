@@ -1,11 +1,7 @@
-import { useContext } from 'react';
 import Tile from './Tile.js';
 import { getAllTiles } from '../../utils/gameUtils.js';
-import { GameContext } from '../../contexts/GameContext.js';
 
-export default function LetterSelection() {
-  const { selectLetter } = useContext(GameContext);
-
+export default function LetterSelection({ selectLetter }) {
   const allTiles = getAllTiles();
   
   return (

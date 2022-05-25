@@ -8,7 +8,6 @@ import PublicGames from './routes/menus/PublicGames.js';
 import Navbar from './components/Navbar.js';
 import UserContextProvider from './contexts/UserContext.js';
 import SocketContextProvider from './contexts/SocketContext.js';
-import GameContextProvider from './contexts/GameContext.js';
 
 export default function App() {
   return (
@@ -16,16 +15,14 @@ export default function App() {
     <div className="app">
       <SocketContextProvider>
         <UserContextProvider>
-          <GameContextProvider>
-            <Navbar />
-            <Routes>
-              <Route path="/" element={<NewUser />} />
-              <Route path="/newgame" element={<PrivateRoute component={NewGame} />} />
-              <Route path="/mygames" element={<PrivateRoute component={MyGames} />} />
-              <Route path="/publicgames" element={<PrivateRoute component={PublicGames} />} />
-              <Route path="/game/:gameId" element={<PrivateRoute component={Game} />} />
-            </Routes>
-          </GameContextProvider>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<NewUser />} />
+            <Route path="/newgame" element={<PrivateRoute component={NewGame} />} />
+            <Route path="/mygames" element={<PrivateRoute component={MyGames} />} />
+            <Route path="/publicgames" element={<PrivateRoute component={PublicGames} />} />
+            <Route path="/game/:gameId" element={<PrivateRoute component={Game} />} />
+          </Routes>
         </UserContextProvider>
       </SocketContextProvider>
     </div>

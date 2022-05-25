@@ -313,23 +313,6 @@ const getPlayableWords = (board) => {
   return playableWords;
 };
 
-/**
- * Return an array of 2d coordinates [row, column] for all board cells containing newly placed tiles.
- * @param {Array} board 
- * @returns Array
- */
-const getUnplayedTileCoords = (board) => {
-  let unplayedTileCoords = [];
-  for (let row=0; row < board.length; row++) {
-    for (let col=0; col < board[row].length; col++) {
-      if (board[row][col].tile !== null && !board[row][col].tile.playedTurn) {
-        unplayedTileCoords.push([row, col]);
-      }
-    }
-  }
-  return unplayedTileCoords;
-};
-
 const getPlacedTiles = (board) => {
   const cells = board.flat().map(cell => {
     if (cell.tile) {
@@ -344,8 +327,8 @@ const getPlacedTiles = (board) => {
 
 const addTilesToBoard = (cells, board) => {
   for (let cell of cells) {
-    const [row, col] = get2dPos(cell.index);
-    board[row][col].tile = cell.tile;
+    const [y, x] = get2dPos(cell.index);
+    board[y][x].tile = cell.tile;
   }
 
   return board;
@@ -397,7 +380,6 @@ export {
   get2dPos,
   isValidPlacement,
   getPlayableWords,
-  getUnplayedTileCoords,
   getPlacedTiles,
   addTilesToBoard,
   recallTilesFromBoard

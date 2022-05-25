@@ -1,12 +1,8 @@
-import { useContext } from 'react';
-import { GameContext } from '../../contexts/GameContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faCrown, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import './game.scss';
 
-export default function PlayerList() {
-  const { players, turns, gameOver } = useContext(GameContext);
-
+export default function PlayerList({ players, turns, gameOver }) {
   const isJoined = (player) => player.userId !== null;
   
   const isActive = (player) => {

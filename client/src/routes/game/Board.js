@@ -1,11 +1,9 @@
 import { useContext } from 'react';
-import { GameContext } from '../../contexts/GameContext';
 import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
 import './game.scss';
 
-export default function Board() {
-  const { board, players, turns } = useContext(GameContext);
+export default function Board({ board, players, turns }) {
   const { user } = useContext(UserContext);
 
   const isPlayersTurn = players[turns % players.length].userId === user.id;
