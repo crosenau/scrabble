@@ -95,11 +95,11 @@ io.on('connection', (socket) => {
 
     joinRoom(socket, data.id);
 
-    socket.to(data.id).emit('gameState', data);
+    socket.to(data.id).emit('gameData', data);
     cb('ok');
   });
 
-  // Triggers server to emit 'gameState' with requested id
+  // Triggers server to emit 'gameData' with requested id
   socket.on('getGame', gameId => {
     console.log('getGame', gameId);
     if (db.data.games.length === 0) return;
@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
     
     if (game) {
       joinRoom(socket, gameId);
-      socket.emit('gameState', game);
+      socket.emit('gameData', game);
     }
   });
 

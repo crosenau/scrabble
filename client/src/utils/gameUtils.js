@@ -1,4 +1,5 @@
-import { findLastIndex, pull } from 'lodash'
+import { findLastIndex } from 'lodash'
+import { isWord } from '../utils/dictionary';
 const { floor, min, random } = Math; 
 
 // Tiles
@@ -7,18 +8,14 @@ const createTile = (
   points = null,
   className = 'tile',
   totalPoints = null,
-  playedTurn = null,
-  dragPosX = null,
-  dragPosY = null
+  playedTurn = null
 ) => {
   return {
     letter,
     points,
     className,
     totalPoints,
-    playedTurn,
-    dragPosX,
-    dragPosY
+    playedTurn
   };
 };
 
@@ -52,6 +49,10 @@ const allTiles = [
   { letter: 'Z', points: 10, numTiles: 1 },
 ];
 
+/**
+ * Return a new tile bag filled with standard assortment of tiles
+ * @returns {Array}
+ */
 const createTileBag = () => {
   console.log('createTileBag')
   const tiles = allTiles.map(tile => { return {...tile} });
@@ -71,9 +72,10 @@ const createTileBag = () => {
   return bag;
 };
 
+// Testing
 const createTestBag = () => {
   const bag = [];
-  // Testing
+
   bag.push(createTile(allTiles[16].letter, allTiles[16].points));
   bag.push(createTile(allTiles[12].letter, allTiles[12].points));
   bag.push(createTile(allTiles[1].letter, allTiles[1].points));
@@ -98,27 +100,29 @@ const createTestBag = () => {
   return bag;
 }
 
+/**
+ * Get one of every tile with just the letter (for display in TileSelector)
+ * @returns {Array}
+ */
 const getAllTiles = () => {
-  const letters = [];
+  const tiles = [];
   for (let x = 1; x < allTiles.length; x++) {
-    letters.push(createTile(allTiles[x].letter));
+    tiles.push(createTile(allTiles[x].letter));
   }
 
-  return letters;
+  return tiles;
 }
 
 /**
- * Refill player's tiles by pulling from tilebag. Modifies input arrays.
- * @param {Array} tileBag
- * @param {Array} playerTiles
+ * Modify input rack by adding multiple tiles to it, filling empty spaces
+ * @param {Array} rack
+ * @param {Array} tiles
  */
-const drawTiles = (tileBag, playerTiles) => {
-  console.log('drawTiles')
-  const maxTiles = 7;
-
-  pull(playerTiles, null);
-  const numTiles = maxTiles - playerTiles.length;
-  playerTiles.push(...tileBag.splice(0, numTiles));
+const addTilesToRack = (rack, tiles) => {  
+  tiles.forEach(tile => {
+    const insertIndex = rack.indexOf(null);
+    rack[insertIndex] = tile;
+  });
 };
 
 // Board
@@ -173,6 +177,10 @@ const cellTypes = [
   }
 ];
 
+/**
+ * Create a new game board with all blank cells
+ * @returns {Array}
+ */
 const createEmptyBoard = () => {
   const [a, b, c, d, e, f] = cellTypes;
   let board = [
@@ -210,16 +218,16 @@ const boardSize = 15;
 /**
  * Convert a cell's index to a 2d coordinate [row, colum] on board
  * @param {Number} index 
- * @returns 
+ * @returns {Array}
  */
 const get2dPos = (index) => [floor(index / boardSize), index % boardSize];
 
 /**
  * Determines if unplayed words are placed in valid positions
- * @param {Array} board 
+ * @param {Array} board
  * @returns {Boolean}
  */
-const isValidPlacement = (board) => {
+  const isValidPlacement = (board) => {
   // Check that center tile is filled
   if (!board[7][7].tile) {
     console.log('Center cell is not filled');
@@ -240,16 +248,19 @@ const isValidPlacement = (board) => {
     return allCols;
   }, []);
 
+  // Verify that new tiles are only placed on a single line
   if (min(rowsWithNewTiles.length, colsWithNewTiles.length) > 1) {
     console.log('pieces must be placed in a single line');
     return false;
   }
   
-  const largestLine = rowsWithNewTiles.length > colsWithNewTiles.length ?
-    colsWithNewTiles[0]: rowsWithNewTiles[0];
+  const largestLine = rowsWithNewTiles.length > colsWithNewTiles.length
+    ? colsWithNewTiles[0]
+    : rowsWithNewTiles[0];
   const start = largestLine.findIndex(cell => cell.tile && cell.tile.playedTurn === null);
   const end = findLastIndex(largestLine, (cell) => cell.tile && cell.tile.playedTurn === null);
 
+  // Verify that there are no gaps in the played line
   if (largestLine.slice(start, end).some(cell => !cell.tile)) {
     console.log('pieces must be placed to form a single word');
     return false;
@@ -260,57 +271,216 @@ const isValidPlacement = (board) => {
 };
 
 /**
- * Return all rows and columns containing multiple tiles with at least one that is unplayed.
+ * Return all rows and columns containing grouped tiles with at least one that is unplayed.
  * @param {Array} board
- * @returns [Array]
+ * @returns {Array} 
  */
-const getPlayableWords = (board) => {
+  const getPlayableWords = (board) => {
   console.log('getPlayableWords');
-  const extractPlayedWords = (line) => {
-    const words = [];
-    let potentialWord = [];
-    let containsUnplayedTile = false;
-
-    line.forEach((cell, i) => {
-      if (cell.tile === null) {
-        if (potentialWord.length > 1 && containsUnplayedTile) {
-          words.push(potentialWord);
-        }
-        potentialWord = [];
-        containsUnplayedTile = false;
-      } else if (cell.tile !== null) {
-        if (!cell.tile.playedTurn) {
-          containsUnplayedTile = true;
-        }
-        potentialWord.push(cell);
-      }
-      if (
-        i === boardSize - 1 
-        && potentialWord.length > 1 
-        && containsUnplayedTile
-      ) {
-          words.push(potentialWord);
-      }
-    });
-    return words;
-  };
 
   let playableWords = [];
+
   board.forEach(row => {
-    const words = extractPlayedWords(row);
-    if (words.length > 0) {
-      playableWords.push(words.flat());
+    const word = getPlayedWordFromLine(row);
+    if (word) {
+      playableWords.push(word);
     }
   });
+  
   const transposedBoard = board[0].map((_, colIndex) => (
     board.map(row => row[colIndex])));
-  transposedBoard.forEach(row => {
-    const words = extractPlayedWords(row);
-    if (words.length > 0) {
-      playableWords.push(words.flat());
+  
+    transposedBoard.forEach(row => {
+    const word = getPlayedWordFromLine(row);
+    if (word) {
+      playableWords.push(word);
     }
   });
+
   return playableWords;
+};
+
+/**
+ * Get a group of tiles containing an unplayed tile from a single line
+ * Used only by getPlayableWords
+ * @param {Array} line 
+ * @returns {Array}
+ */
+const getPlayedWordFromLine = (line) => {
+  // const word = [];
+  let word = null;
+  let potentialWord = [];
+  let containsUnplayedTile = false;
+
+  line.forEach((cell, i) => {
+    if (cell.tile === null) {
+      if (potentialWord.length > 1 && containsUnplayedTile) {
+        // word.push(potentialWord);
+        word = potentialWord;
+      }
+      potentialWord = [];
+      containsUnplayedTile = false;
+    } else if (cell.tile !== null) {
+      if (cell.tile.playedTurn === null) {
+        containsUnplayedTile = true;
+      }
+      potentialWord.push(cell);
+    }
+    if (
+      i === boardSize - 1 
+      && potentialWord.length > 1 
+      && containsUnplayedTile
+    ) {
+        // word.push(potentialWord);
+        word = potentialWord;
+    }
+  });
+  
+  return word;
+};
+
+/**
+ * Lookup words in dictionary and return invalid ones
+ * @param {Array} words 
+ * @returns 
+ */
+const evaluatePlayedWords = (words) => {
+  const invalidWords = words.reduce((prevWords, word) => {
+    const text = word.map(cell => cell.tile.letter).join('');
+    console.log('isWord ', text, isWord(text));
+    if (!isWord(text)) {
+      return [...prevWords, word]
+    }
+    return prevWords;
+  }, [])
+
+  return invalidWords;
+};
+
+/**
+ * Modify input board, marking all unplayed tiles as invalid
+ * @param {Array} board 
+ */
+const markInvalidTiles = (board) => {
+  board.forEach(row => {
+    row.forEach(cell => {
+      if (cell.tile && cell.tile.playedTurn === null) {
+        cell.tile.className = 'tile--invalid';
+      }
+    });
+  });
+};
+
+/**
+ * Modify input board, marking all board tiles from specified words as invalid
+ * @param {Array} words 
+ * @param {Array} board 
+ */
+const markInvalidWords = (words, board) => {
+  words.forEach(word => {
+    const text = word.map(cell => cell.tile.letter).join('');
+    const indices = word.map(cell => cell.index);
+    board.forEach(row => {
+      row.forEach(cell => {
+        if (cell.tile && indices.includes(cell.index)) {
+          cell.tile.className = 'tile--invalid';
+        }
+      });
+    });
+  });
+};
+
+/**
+ * Modify input board, marking specified words as scored and return total move points.
+ * @param {Array} playedWords 
+ * @param {Array} board 
+ * @param {Number} turns 
+ * @returns 
+ */
+const scorePlayedWords = (playedWords, board, turns) => {
+  // Set className for previously scored tiles
+  board.flat().forEach(cell => {
+    if (cell.tile && cell.tile.playedTurn !== null) {
+      cell.tile.className = 'tile--played';
+      cell.tile.totalPoints = null;
+    }
+  });
+
+  // Mark newly played tiles and update user's score
+  let movePoints = 0;
+
+  playedWords.forEach(word => {
+    const indices = word.map(cell => cell.index);
+    const score = scoreWord(word);
+    console.log(`Scored ${word.map(cell => cell.tile.letter).join('')} for ${score} pts`); 
+    board.flat().forEach(cell => {
+      if (cell.tile && indices.includes(cell.index)) {
+        cell.tile.className = 'tile--scored';
+        cell.tile.playedTurn = turns;
+        cell.tile.totalPoints = cell.index === indices[indices.length-1]
+          ? (cell.tile.totalPoints || 0) + score
+          : cell.tile.totalPoints
+      }
+    });
+
+    movePoints += score;
+  });
+
+  return movePoints;
+};
+
+/**
+ * Return the score for an individual word, adding tile points and applying cell modifiers
+ * @param {Array} word 
+ * @returns 
+ */
+const scoreWord = (word) => {
+  let wordScoreMod = 1;
+  let score = 0;
+  let playedTiles = 0;
+  word.forEach(cell => {
+    if (cell.letterScoreMod && cell.tile.playedTurn === null) {
+      score += (cell.tile.points * cell.letterScoreMod);
+    } else {
+      score += cell.tile.points;
+    }
+    if (cell.wordScoreMod && cell.tile.playedTurn === null) {
+      wordScoreMod = cell.wordScoreMod;
+    }
+    if (cell.tile.playedTurn === null) {
+      playedTiles += 1;
+    }
+  });
+
+  score *= wordScoreMod;
+  score += (playedTiles === 7) ? 50 : 0;
+  return score;
+};
+
+/**
+ * Modifies input board by removing unplayed tiles and returns them in an array
+ * @param {Array} board 
+ * @returns {Array}
+ */
+  const removeUnplayedTiles = (board) => {
+  const recalledTiles = [];
+
+  resetInvalidTiles(board);
+  board
+    .flat()
+    .forEach(cell => {
+      if (cell.tile && cell.tile.playedTurn === null) {
+        recalledTiles.push(cell.tile);
+        cell.tile = null;
+      }
+    });
+
+    recalledTiles.forEach(tile => {
+      tile.letter = tile.points === 0 ? '' : tile.letter;
+      tile.className = 'tile';
+    });
+
+  return recalledTiles;
 };
 
 const getPlacedTiles = (board) => {
@@ -325,21 +495,11 @@ const getPlacedTiles = (board) => {
   return cells;
 }
 
-const addTilesToBoard = (cells, board) => {
-  for (let cell of cells) {
-    const [y, x] = get2dPos(cell.index);
-    board[y][x].tile = cell.tile;
-  }
-
-  return board;
-}
-
 /**
- * Remove unplayed tiles from board and return them to player's tiles. Modifies input arrays.
- * @param {array} board 
- * @param {array} playerTiles 
+ * Modifies board by resetting classNames for all 'invalid' tiles
+ * @param {array} board  
  */
-const recallTilesFromBoard = (board, playerTiles) => {
+const resetInvalidTiles = (board) => {
   const lastPlayedTurn = board
     .flat()
     .map(cell => cell.tile ? cell.tile.playedTurn : 0)
@@ -347,27 +507,16 @@ const recallTilesFromBoard = (board, playerTiles) => {
 
   board.forEach(row => {
     row.forEach(cell => {
-      if (cell.tile) {
-        // Reset classNames for tiles marked as invalid
-        if (cell.tile.playedTurn !== null && cell.tile.className === 'tile--invalid') {
-          if (cell.tile.playedTurn === lastPlayedTurn) {
-              cell.tile.className = 'tile--scored';
-          } else {
-            cell.tile.className = 'tile--played';
-          }
-        } else if (cell.tile.playedTurn === null) {
-            const insertIndex = playerTiles.indexOf(null);
-            playerTiles[insertIndex] = cell.tile;
-            cell.tile = null;
-          }
+      if (cell.tile && cell.tile.className === 'tile--invalid') {
+        if (cell.tile.playedTurn === null) {
+          cell.tile.className = 'tile';
+        } else if (cell.tile.playedTurn === lastPlayedTurn) {
+          cell.tile.className = 'tile--scored';
+        } else {
+          cell.tile.className = 'tile--played';
+        }
       }
-    })
-  });
-
-  playerTiles.forEach(tile => {
-    if (!tile) return;
-    tile.letter = tile.points === 0 ? '' : tile.letter;
-    tile.className = 'tile';
+    });
   });
 }
 
@@ -375,12 +524,16 @@ export {
   createTileBag,
   createTestBag,
   getAllTiles,
-  drawTiles,
   createEmptyBoard,
   get2dPos,
   isValidPlacement,
   getPlayableWords,
   getPlacedTiles,
-  addTilesToBoard,
-  recallTilesFromBoard
+  resetInvalidTiles,
+  markInvalidTiles,
+  evaluatePlayedWords,
+  markInvalidWords,
+  scorePlayedWords,
+  addTilesToRack,
+  removeUnplayedTiles
 };

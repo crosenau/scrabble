@@ -9,7 +9,7 @@ export default function SocketContextProvider(props) {
   const [isOnline, setIsOnline] = useState(false);
   const [myGames, setMyGames] = useState(null);
   const [publicGames, setPublicGames] = useState(null);
-  const [gameState, setGameState] = useState(null);
+  const [gameData, setGameData] = useState(null);
   
   useEffect(() => {
     const newSocket = io('//:3001');
@@ -24,9 +24,9 @@ export default function SocketContextProvider(props) {
       setIsOnline(newSocket.connected);
     });
 
-    newSocket.on('gameState', data => {
-      console.log('gameState received');
-      setGameState(data);
+    newSocket.on('gameData', data => {
+      console.log('gameData received');
+      setGameData(data);
     });
 
     newSocket.on('myGames', gameList => {
@@ -54,9 +54,9 @@ export default function SocketContextProvider(props) {
     }
   }
 
-  const putGame = (gameState) => {
+  const putGame = (gameData) => {
     try {
-      socket.emit('putGame', gameState, (ack) => {
+      socket.emit('putGame', gameData, (ack) => {
         if (ack !== 'ok') {
           throw new Error('Error creating new game');
         }
@@ -83,7 +83,7 @@ export default function SocketContextProvider(props) {
       isOnline,
       myGames,
       publicGames,
-      gameState,
+      gameData,
       putUser,
       putGame,
       getGame,
