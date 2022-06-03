@@ -3,6 +3,7 @@
 .menu {
   @include mixins.user-select(none);
   height: 100%;
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -29,16 +30,21 @@
   font-size: 1rem;
   padding: 0 1.5rem 1.5rem 1.5rem;
   width: 60%;
-  height: 80%;
+  height: 70vh;
   position: relative;
   user-select: none;
   display: flex;
   flex-direction: column;
+
+  & button {
+    font-size: 0.8rem;
+    padding: 0.1rem;
+  }
 }
 
 .game-list__headers, .game-list__rows {
   display: grid;
-  grid-template-columns: 35% 20% 25% 20%;
+  grid-template-columns: 40% 20% 25% 15%;
   align-items: center;
 }
 
@@ -77,12 +83,7 @@
     font-size: 0.8rem;
     padding: 0 1rem 1rem 1rem;
     width: 80%;
-    height: 70%;
     margin-bottom: 15%;
-    
-    & button {
-      font-size: 0.6em;
-    }
   }
   
   .game-list__rows {

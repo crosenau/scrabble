@@ -20,7 +20,7 @@ export default function MyGames() {
     <div className="menu">
       {(!myGames || myGames.length < 1)
         ? <div className="menu__message">You have not joined or created any games.</div> 
-      : <GameList games={myGames} buttonLabel="Resume" />
+      : <GameList games={myGames} buttonLabel="Play" />
       }
     </div>
   );

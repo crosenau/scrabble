@@ -535,5 +535,6 @@ export {
   markInvalidWords,
   scorePlayedWords,
   addTilesToRack,
-  removeUnplayedTiles
+  removeUnplayedTiles,
+  isWord
 };

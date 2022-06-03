@@ -14,21 +14,19 @@ export default function Rack({ players }) {
   }
 
   return (
-    <div className="rack-container">
-      <div className="rack">
-        {tiles.map((tile, i) => (
-          <div 
-            className="rack__cell"
-            data-index={i}
-            key={i}
-          >
-            {tile 
-              ? <Tile tile={tile}/>
-              : null
-            }
-            </div>
-        ))}
-      </div>
+    <div className="rack">
+      {tiles.map((tile, i) => (
+        <div 
+          className="rack__cell"
+          data-index={i}
+          key={i}
+        >
+          {tile 
+            ? <Tile tile={tile}/>
+            : null
+          }
+          </div>
+      ))}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Tile from './Tile';
 import GreenButton from '../../components/GreenButton';
 import PlayerList from './PlayerList';
 import LetterSelection from './LetterSelection';
+import Lookup from './Lookup';
 import useGame from '../../hooks/useGame.js';
 import './game.scss';
 
@@ -86,10 +87,11 @@ export default function Game() {
           turns={turns}
           gameOver={gameOver}
         />
-        <div className="info">
+        <div className="game__info">
           <div>Tiles: {tileBag.length}</div>
           <div>Turn: {turns+1}</div>
         </div>
+        <Lookup />
         <div className="turn-buttons">
           <GreenButton label="Skip" type="button" onClick={skipTurn} />
           { isTradingTiles

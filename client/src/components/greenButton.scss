@@ -1,10 +1,12 @@
 @use "../mixins";
 
 .green-button {
-  @include mixins.panel;
+  @include mixins.user-select(none);
+  background-color: #001;
   color: white;
   border: none;
-  padding: 0.5em;
+  font-size: 1rem;
+  padding: 0.75rem;
   cursor: pointer;
   box-shadow: none;
 }
