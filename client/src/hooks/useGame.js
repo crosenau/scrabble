@@ -161,7 +161,10 @@ export default function useGame() {
     addTilesToRack(rack, newTiles);
 
     // Game over condition
-    if (newTileBag.length === 0 && newPlayers[playerIndex].tiles.length === 0) {
+    if (
+      newTileBag.length === 0 
+      && newPlayers[playerIndex].tiles.filter(tile => tile !== null).length === 0
+      ) {
       newPlayers.forEach((player, i) => {
         if (i === playerIndex) return;
 
@@ -174,7 +177,6 @@ export default function useGame() {
 
         player.score -= unplayedPoints;
         newPlayers[playerIndex].score += unplayedPoints;
-
       });
 
       setGameOver(true);

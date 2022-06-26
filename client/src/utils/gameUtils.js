@@ -411,7 +411,7 @@ const scorePlayedWords = (playedWords, board, turns) => {
 
   playedWords.forEach(word => {
     const indices = word.map(cell => cell.index);
-    const score = scoreWord(word);
+    const score = scoreWord(word, turns);
     console.log(`Scored ${word.map(cell => cell.tile.letter).join('')} for ${score} pts`); 
     board.flat().forEach(cell => {
       if (cell.tile && indices.includes(cell.index)) {
@@ -431,20 +431,27 @@ const scorePlayedWords = (playedWords, board, turns) => {
 
 /**
  * Return the score for an individual word, adding tile points and applying cell modifiers
- * @param {Array} word 
+ * @param {Array} word
+ * @param {Number} turns
  * @returns 
  */
-const scoreWord = (word) => {
+const scoreWord = (word, turns) => {
   let wordScoreMod = 1;
   let score = 0;
   let playedTiles = 0;
   word.forEach(cell => {
-    if (cell.letterScoreMod && cell.tile.playedTurn === null) {
+    if (
+      cell.letterScoreMod 
+      && (cell.tile.playedTurn === null || cell.tile.playedTurn === turns)
+      ) {
       score += (cell.tile.points * cell.letterScoreMod);
     } else {
       score += cell.tile.points;
     }
-    if (cell.wordScoreMod && cell.tile.playedTurn === null) {
+    if (
+      cell.wordScoreMod 
+      && (cell.tile.playedTurn === null || cell.tile.playedTurn === turns)
+      ) {
       wordScoreMod = cell.wordScoreMod;
     }
     if (cell.tile.playedTurn === null) {
