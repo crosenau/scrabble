@@ -12,7 +12,7 @@ export default function SocketContextProvider(props) {
   const [gameData, setGameData] = useState(null);
   
   useEffect(() => {
-    const newSocket = io('//:3001');
+    const newSocket = io(process.env.REACT_APP_API_URL);
 
     newSocket.on('connect', () => {
       console.log('client connected');

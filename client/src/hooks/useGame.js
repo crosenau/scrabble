@@ -36,7 +36,7 @@ export default function useGame() {
   
   const playerIndex = turns % players.length;
 
-  // Request gameId from url
+  // Request game based on gameId in url
   useEffect(() => {
     if (isOnline) {
       getGame(gameId);
@@ -83,7 +83,12 @@ export default function useGame() {
       }
     }
 
-    if (gameData) setGameState(gameData);
+    if (gameData) {
+      // clear grabbedTile before setting gameState
+      // This prevents the grabbed tile from being duplicated when player's rack is reloaded
+      setGrabbedTile(null);
+      setGameState(gameData);
+    }
   }, [gameData]);
   
   // Emit gameState to server when 'emit' it 'true'
@@ -152,9 +157,20 @@ export default function useGame() {
     const newPlayers = cloneDeep(players);
 
     newPlayers[playerIndex].score += movePoints;
+    
+    const rack = newPlayers[playerIndex].tiles;
+
+    // Return grabbedTile to rack
+    if (grabbedTile !== null) {
+      addTilesToRack(rack, [{
+        ...grabbedTile,
+        className: 'tile',
+      }])
+
+      setGrabbedTile(null);
+    }
 
     // Draw tiles from tileBag
-    const rack = newPlayers[playerIndex].tiles;
     const numTiles = rack.filter(tile => tile === null).length;
     const newTiles = newTileBag.splice(0, numTiles);
 
@@ -324,6 +340,15 @@ export default function useGame() {
     resetInvalidTiles(newBoard);
     const recalledTiles = removeUnplayedTiles(newBoard);
 
+    if (grabbedTile !== null) {
+      recalledTiles.push({
+        ...grabbedTile,
+        className: 'tile',
+      });
+
+      setGrabbedTile(null);
+    }
+
     addTilesToRack(rack, recalledTiles);
 
     setBoard(newBoard);
@@ -349,6 +374,15 @@ export default function useGame() {
 
     resetInvalidTiles(newBoard);
     const recalledTiles = removeUnplayedTiles(newBoard);
+
+    if (grabbedTile !== null) {
+      recalledTiles.push({
+        ...grabbedTile,
+        className: 'tile',
+      });
+
+      setGrabbedTile(null);
+    }
 
     addTilesToRack(rack, recalledTiles);
 
