@@ -15,3 +15,12 @@
   color: black;
   background-color: #494;
 }
+
+.green-button:disabled {
+  color: #555;
+}
+
+.green-button:disabled:hover {
+  background-color: #001;
+  cursor: not-allowed;
+}

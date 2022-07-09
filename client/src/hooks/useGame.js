@@ -2,21 +2,11 @@ import { useState, useContext, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
 import { SocketContext } from '../contexts/SocketContext';
-import {
-  get2dPos,
-  createEmptyBoard,
-  getPlacedTiles,
-  resetInvalidTiles,
-  addTilesToRack,
-  getPlayableWords,
-  isValidPlacement,
-  markInvalidTiles,
-  evaluatePlayedWords,
-  markInvalidWords,
-  scorePlayedWords,
-  removeUnplayedTiles
-} from '../utils/gameUtils';
+import { addTilesToRack } from '../utils/gameUtils';
+import Board from '../utils/board.js';
 import { cloneDeep, shuffle } from 'lodash';
+
+const board = new Board();
 
 export default function useGame() {  
   const { user } = useContext(UserContext);
@@ -24,17 +14,18 @@ export default function useGame() {
   const { gameId } = useParams();
 
   const [grabbedTile, setGrabbedTile] = useState(null);
-  const [board, setBoard] = useState(createEmptyBoard());
+  const [cells, setCells] = useState(board.cells);
   const [isTradingTiles, setIsTradingTiles] = useState(false);
   const [gameName, setGameName] = useState(null);
   const [tileBag, setTileBag] = useState(null);
   const [turns, setTurns] = useState(0);
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState(null);
   const [gameOver, setGameOver] = useState(false);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
   const [emit, setEmit] = useState(false);
   
-  const playerIndex = turns % players.length;
+  const playerIndex = players && turns % players.length;
+  const isPlayersTurn = players && players[playerIndex].userId === user.id && !gameOver;
 
   // Request game based on gameId in url
   useEffect(() => {
@@ -65,7 +56,14 @@ export default function useGame() {
           }
         }
 
-        setBoardTiles(game.boardTiles);
+        board.resetCells();
+
+        for (let cell of game.boardTiles) {
+          // const [y, x] = get2dPos(cell.index);
+          board.setCellTile(cell.index, cell.tile);
+        }
+
+        setCells(board.cells);
     
         setTileBag(game.tileBag);
         setTurns(game.turns);
@@ -99,7 +97,7 @@ export default function useGame() {
     const game = {
       name: gameName,
       id: gameId,
-      boardTiles: getPlacedTiles(board),
+      boardTiles: board.getPlacedTiles(),
       tileBag,
       turns,
       players,
@@ -110,45 +108,33 @@ export default function useGame() {
     setEmit(null);
   }, [emit]);
 
-  const setBoardTiles = (cells) => {
-    const newBoard = createEmptyBoard();
-    
-    for (let cell of cells) {
-      const [y, x] = get2dPos(cell.index);
-      newBoard[y][x].tile = cell.tile;
-    }
-
-    setBoard(newBoard);
-  };
-
   const playWords = () => {
-    if (gameOver || players[playerIndex].userId !== user.id) return;
-    const newBoard = cloneDeep(board);
+    if (!isPlayersTurn) return;
 
-    const validPlacement = isValidPlacement(newBoard);
-    const playedWords = getPlayableWords(newBoard);
+    const [validPlacement, reason] = board.isValidPlacement();
+    const playedWords = board.getPlayedWords();
 
     if (!validPlacement || playedWords.length === 0) {
-      alert('Invalid Move');
-      markInvalidTiles(newBoard);
-      setBoard(newBoard);
+      alert('Invalid Move: ' + reason);
+      board.markInvalidTiles();
+      setCells(board.cells);
       return;
     }
 
-    const invalidWords = evaluatePlayedWords(playedWords);
+    const invalidWords = board.evaluatePlayedWords(playedWords);
 
     if (invalidWords.length > 0) {
-      markInvalidWords(invalidWords, newBoard);
-      setBoard(newBoard);
+      board.markInvalidWords(invalidWords);
+      setCells(board.cells);
       alert(invalidWords.map(word => {
         return `${word.map(cell => cell.tile.letter).join('')} is not a word`;
       }).join('\n'));
       return;
     }
 
-    const movePoints = scorePlayedWords(playedWords, newBoard, turns);
+    const movePoints = board.scorePlayedWords(playedWords, turns);
 
-    setBoard(newBoard);
+    setCells(board.cells);
     endTurn(movePoints);
   };
 
@@ -246,55 +232,53 @@ export default function useGame() {
   };
 
   const grabTileFromBoard = (event) => {
-    const [y, x] = get2dPos(event.target.dataset.index);
+    const [y, x] = board.get2dPos(event.target.dataset.index);
+    const tileInBoardCell = board.getCellTile([y, x]);
 
     if (
-      players[playerIndex].userId !== user.id
+      !isPlayersTurn
       || grabbedTile !== null
-      || !board[y][x].tile
-      || board[y][x].tile.playedTurn !== null
+      || !tileInBoardCell
+      || tileInBoardCell.playedTurn !== null
     ) return;
 
     setGrabbedTile({
-      ...board[y][x].tile,
-      letter: board[y][x].tile.points > 0 ? board[y][x].tile.letter : null,
+      ...tileInBoardCell,
+      letter: tileInBoardCell.points > 0 ? tileInBoardCell.letter : null,
       className: 'tile--grabbed',
     });
-
-    const newBoard = cloneDeep(board);
     
-    resetInvalidTiles(newBoard);
-    newBoard[y][x].tile = null;
-    setBoard(newBoard);
+    board.resetInvalidTiles();
+    board.setCellTile([y, x], null);
+    setCells(board.cells);
   };
 
   const placeTileOnBoard = (event) => {
     const target = document.elementFromPoint(event.clientX, event.clientY);
-    const [y, x] = get2dPos(target.dataset.index);
+    const [y, x] = board.get2dPos(target.dataset.index);
+    const tileInBoardCell = board.getCellTile([y, x]);
 
     if (
       grabbedTile === null 
-      || players[playerIndex].userId !== user.id
-      || (board[y][x].tile && board[y][x].tile.playedTurn !== null)
+      || !isPlayersTurn
+      || (tileInBoardCell && tileInBoardCell.playedTurn !== null)
     ) return;
       
     // If a tile is already on board, store existing tile to swap with grabbedTile
-    const swapTile = board[y][x].tile !== null
+    const swapTile = tileInBoardCell !== null
       ? {
-        ...board[y][x].tile,
+        ...tileInBoardCell,
         className: 'tile--grabbed',
       }
       : null;
 
-    const newBoard = cloneDeep(board);
-
-    newBoard[y][x].tile = {
+    board.setCellTile([y, x], {
       ...grabbedTile,
       className: 'tile'
-    };
+    });
 
-    resetInvalidTiles(newBoard);
-    setBoard(newBoard);
+    board.resetInvalidTiles();
+    setCells(board.cells);
 
     if (grabbedTile.letter === null) {
       setLetterSelectVisible(true);
@@ -315,30 +299,28 @@ export default function useGame() {
   };
 
   const recallTiles = () => {
-    if (players[playerIndex].userId !== user.id) return;
+    if (!isPlayersTurn) return;
     
-    const newBoard = cloneDeep(board);
     const newPlayers = cloneDeep(players);
     const rack = newPlayers[playerIndex].tiles;
 
-    resetInvalidTiles(newBoard);
-    const recalledTiles = removeUnplayedTiles(newBoard);
+    board.resetInvalidTiles();
+    const recalledTiles = board.removeUnplayedTiles();
 
     addTilesToRack(rack, recalledTiles);
     
-    setBoard(newBoard);
+    setCells(board.cells);
     setPlayers(newPlayers);
   };
 
   const skipTurn = () => {
-    if (players[playerIndex].userId !== user.id) return;
+    if (!isPlayersTurn) return;
 
-    const newBoard = cloneDeep(board);
     const newPlayers = cloneDeep(players);
     const rack = newPlayers[playerIndex].tiles;
 
-    resetInvalidTiles(newBoard);
-    const recalledTiles = removeUnplayedTiles(newBoard);
+    board.resetInvalidTiles();
+    const recalledTiles = board.removeUnplayedTiles();
 
     if (grabbedTile !== null) {
       recalledTiles.push({
@@ -351,7 +333,7 @@ export default function useGame() {
 
     addTilesToRack(rack, recalledTiles);
 
-    setBoard(newBoard);
+    setCells(board.cells);
     setPlayers(newPlayers);
     setTurns(turns + 1);
     setEmit(true);
@@ -366,14 +348,13 @@ export default function useGame() {
   };
 
   const toggleIsTradingTiles = () => {
-    if (players[playerIndex].userId !== user.id) return;
+    if (!isPlayersTurn) return;
 
-    const newBoard = cloneDeep(board);
     const newPlayers = cloneDeep(players);
     const rack = newPlayers[playerIndex].tiles;
 
-    resetInvalidTiles(newBoard);
-    const recalledTiles = removeUnplayedTiles(newBoard);
+    board.resetInvalidTiles();
+    const recalledTiles = board.removeUnplayedTiles();
 
     if (grabbedTile !== null) {
       recalledTiles.push({
@@ -386,7 +367,7 @@ export default function useGame() {
 
     addTilesToRack(rack, recalledTiles);
 
-    setBoard(newBoard);
+    setCells(board.cells);
     setPlayers(newPlayers);
     setIsTradingTiles(!isTradingTiles);
   };
@@ -417,29 +398,22 @@ export default function useGame() {
   };
   
   const selectLetter = (letter) => {
-    const newboard = board;
-    
-    newboard.forEach(row => {
-      row.forEach(cell => {
-        if (cell.tile && cell.tile.letter === null) {
-          cell.tile.letter = letter;
-        }
-      });
-    });
+    board.setBlankTileLetter(letter);
 
-    setBoard(newboard);
+    setCells(board.cells);
     setLetterSelectVisible(false);
   };
 
   return {
     grabbedTile,
-    board,
+    cells,
     isTradingTiles,
     tileBag,
     turns,
     players,
     gameOver,
     letterSelectVisible,
+    isPlayersTurn,
     selectTile,
     grabTileFromBoard,
     grabTileFromRack,
@@ -451,6 +425,6 @@ export default function useGame() {
     playWords,
     recallTiles,
     shuffleTiles,
-    selectLetter
+    selectLetter,
   }
 }

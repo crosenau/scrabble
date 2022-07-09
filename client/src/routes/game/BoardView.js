@@ -1,13 +1,7 @@
-import { useContext } from 'react';
-import { UserContext } from '../../contexts/UserContext';
 import Tile from './Tile';
 import './game.scss';
 
-export default function Board({ board, players, turns }) {
-  const { user } = useContext(UserContext);
-
-  const isPlayersTurn = players[turns % players.length].userId === user.id;
-
+export default function BoardView({ cells, isPlayersTurn }) {
   return (
     <div 
       className="board"
@@ -16,7 +10,7 @@ export default function Board({ board, players, turns }) {
         cursor: 'default'
       }}
     >
-    {board.flat().map((cell) => (
+    {cells.flat().map((cell) => (
       <div 
         className={cell.className}
         data-index={cell.index}

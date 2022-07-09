@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Board from './Board';
+import BoardView from './BoardView';
 import Rack from './Rack';
 import Tile from './Tile';
 import GreenButton from '../../components/GreenButton';
@@ -12,13 +12,14 @@ import './game.scss';
 export default function Game() {  
   const {
     grabbedTile,
-    board,
+    cells,
     isTradingTiles,
     tileBag,
     turns,
     players,
     gameOver,
     letterSelectVisible,
+    isPlayersTurn,
     selectTile,
     grabTileFromBoard,
     grabTileFromRack,
@@ -30,7 +31,8 @@ export default function Game() {
     playWords,
     recallTiles,
     shuffleTiles,
-    selectLetter
+    selectLetter,
+    user
   } = useGame();
 
   const [pointerPos, setPointerPos] = useState({ x: 0, y: 0});
@@ -93,24 +95,26 @@ export default function Game() {
         </div>
         <Lookup />
         <div className="turn-buttons">
-          <GreenButton label="Skip" type="button" onClick={skipTurn} />
+          <GreenButton label="Skip" type="button" onClick={skipTurn} disabled={!isPlayersTurn} />
           { isTradingTiles
-            ? <GreenButton label="Confirm" type="button" onClick={tradeSelectedTiles} />
-            : <GreenButton label="Trade" type="button" onClick={toggleIsTradingTiles} />
+            ? <GreenButton label="Confirm" type="button" onClick={tradeSelectedTiles} disabled={!isPlayersTurn} />
+            : <GreenButton label="Trade" type="button" onClick={toggleIsTradingTiles} disabled={!isPlayersTurn}/>
           }
 
-          <GreenButton label="Play" type="button" onClick={playWords} />
+          <GreenButton label="Play" type="button" onClick={playWords} disabled={!isPlayersTurn}/>
+
         </div>
       </div>
       <div className="game__section-2">
-        <Board 
-          board={board}
+        <BoardView 
+          cells={cells}
           players={players}
           turns={turns}
+          isPlayersTurn
         />
         <Rack players={players}/>
         <div className="tile-buttons">
-          <GreenButton label="Recall" type="button" onClick={recallTiles} />
+          <GreenButton label="Recall" type="button" onClick={recallTiles} disabled={!isPlayersTurn}/>
           <GreenButton label="Shuffle" type="button" onClick={shuffleTiles} />
         </div>
       </div>
