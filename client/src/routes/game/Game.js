@@ -98,6 +98,12 @@ export default function Game() {
         <Lookup dictionary={dictionary}/>
         <div className="turn-buttons">
           <GreenButton 
+              label="Best Word" 
+              type="button" 
+              onClick={bestWord} 
+              disabled={!isPlayersTurn || players[playerIndex].bestWords < 1}
+          />
+          <GreenButton 
             label="Skip" 
             type="button" 
             onClick={skipTurn} 
@@ -137,12 +143,6 @@ export default function Game() {
             label="Recall" 
             type="button" 
             onClick={recallTiles} disabled={!isPlayersTurn}
-          />
-          <GreenButton 
-            label="Best Word" 
-            type="button" 
-            onClick={bestWord} 
-            disabled={!isPlayersTurn || players[playerIndex].bestWords < 1}
           />
           <GreenButton 
             label="Shuffle" 

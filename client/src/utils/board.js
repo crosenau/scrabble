@@ -447,7 +447,7 @@ export default class Board {
         ) {
         wordScoreMod = cell.wordScoreMod;
       }
-      if (cell.tile.playedTurn === null) {
+      if (cell.tile.playedTurn === null || cell.tile.playedTurn === turns) {
         playedTiles += 1;
       }
     });

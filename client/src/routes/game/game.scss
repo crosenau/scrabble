@@ -2,7 +2,7 @@
 @use "sass:color";
 
 :root {
-  --board-size: 40vmax;
+  --board-size: 39vmax;
   --cell-gap: 1px;
   --cell-font-size: calc(var(--board-size) / 30);
   --tile-size: calc(var(--board-size) / 15 - calc(var(--cell-gap) * 2));
@@ -41,9 +41,19 @@
 
 .turn-buttons {
   width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  grid-gap: 1rem;
+
+  & > :nth-child(1) {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+  }
+
+  & > :not(:nth-child(1)) {
+    grid-row: 2 / 3;
+  }
 }
 
 .tile-buttons {
@@ -52,6 +62,12 @@
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
+
+  & > * {
+    flex: 1;
+    // width: 100%;
+    margin: 0 0.5rem;
+  }
 }
 
 // LetterSelection
