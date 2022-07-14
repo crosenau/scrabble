@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import GreenButton from '../../components/GreenButton.js';
-import { isWord } from '../../utils/gameUtils.js';
 import './game.scss';
 
-export default function Lookup() {
+export default function Lookup({ dictionary }) {
   const [word, setWord] = useState('');
   const [isValid, setIsValid] = useState(null);
 
@@ -17,7 +16,7 @@ export default function Lookup() {
 
   const lookupWord = (event) => {
     event.preventDefault();
-    setIsValid(isWord(word));
+    setIsValid(dictionary.isWord(word.toUpperCase()));
   }
 
   return (

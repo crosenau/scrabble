@@ -1,9 +1,11 @@
 export default class Solver {
-  constructor(dictionary, board, rack) {
+  constructor(dictionary, board) {
     this.dictionary = dictionary;
     this.board = board;
-    this.rackLetters = rack.map(tile => tile.letter);
 
+    this.rackTiles = []
+    this.rackLetters = [];
+    this.turns = null;
     this.crossCheckResults = [];
     this.direction = null;
     this.allMoves = [];
@@ -50,8 +52,6 @@ export default class Solver {
   }
 
   logMove(word, lastPos) {
-    console.log('found a word: ', word);
-
     const newBoard = this.board.copy();
     const moveData = {
       letters: [],
@@ -61,24 +61,40 @@ export default class Solver {
     let playPos = lastPos;
     let wordIndex = word.length - 1;
 
-    while (wordIndex >= 0) {      
-      newBoard.setCellTile(playPos, {...tiles[word[wordIndex]]});
+    while (wordIndex >= 0) {
+      if (newBoard.getCellTile(playPos) === null) {
+        const insertTile = this.rackTiles.find(tile => tile !== null && (tile.letter === word[wordIndex] || tile.letter === null));
+        newBoard.setCellTile(
+          playPos, 
+          { ...insertTile, 
+            letter: word[wordIndex]
+          }
+        );
+      }
+
       moveData.letters.push(word[wordIndex]);
       moveData.positions.push(playPos);
       wordIndex--;
       playPos = this.before(playPos);
     }
 
-    const validPlacement = newBoard.isValidPlacement();
+    const [validPlacement, reason] = newBoard.isValidPlacement();
     const playedWords = newBoard.getPlayedWords();
 
+    // For some reason crossCheckResults is not always working so we still make sure crosswords are valid here.
     if (!validPlacement || playedWords.length === 0) {
-      console.error('Invalid Move');
+      // console.error(`Invalid Move: ${reason}`);
       return;
     }
 
-    // Need to have access to turns to use for this
-    moveData.movePoints = newBoard.scorePlayedWords(playedWords, 0);
+    const invalidWords = newBoard.evaluatePlayedWords(playedWords);
+
+    if (invalidWords.length > 0) {
+      // console.error(`Invalid Words: ${invalidWords.map(word => word.map(cell => cell.tile.letter).join('')).join(', ')}`);
+      return;
+    }
+
+    moveData.movePoints = newBoard.scorePlayedWords(playedWords, this.turns);
     
     this.allMoves.push(moveData);
   }
@@ -158,12 +174,15 @@ export default class Solver {
    * @param {Array.<Number>} anchorPos 
    * @param {Number} limit 
    */
-  beforePart(partialWord, currentNode, anchorPos, limit) {
+  beforePart(partialWord, currentNode, anchorPos, limit) {    
     this.extendAfter(partialWord, currentNode, anchorPos, false);
     if (limit > 0) {
       for (let nextLetter of currentNode.children.keys()) {
-        if (this.rackLetters.includes(nextLetter)) {
-          const rackIndex = this.rackLetters.indexOf(nextLetter);
+        if (this.rackLetters.some(l => l === nextLetter || l === '.')) {
+          const rackIndex = this.rackLetters.indexOf(nextLetter) !== -1 
+            ? this.rackLetters.indexOf(nextLetter)
+            : this.rackLetters.indexOf('.');
+          const storedLetter = this.rackLetters[rackIndex];
           this.rackLetters[rackIndex] = null;
           this.beforePart(
             partialWord + nextLetter,
@@ -171,7 +190,7 @@ export default class Solver {
             anchorPos,
             limit - 1
           );
-          this.rackLetters[rackIndex] = nextLetter;
+          this.rackLetters[rackIndex] = storedLetter;
         }
       }
     }
@@ -185,14 +204,21 @@ export default class Solver {
    * @param {Boolean} anchorFilled 
    */
   extendAfter(partialWord, currentNode, nextPos, anchorFilled) {
-    if (!this.board.isFilled(nextPos) && currentNode.isEnd() && anchorFilled) {
+    if (this.board.isEmpty(nextPos) && currentNode.isEnd() && anchorFilled) {
+      // partialWord === 'JO' && console.log('this shouldn\'t happen');
       this.logMove(partialWord, this.before(nextPos));
     }
     if (this.board.inBounds(nextPos)) {
       if (this.board.isEmpty(nextPos)) {
         for (let nextLetter of currentNode.children.keys()) {
-          if (this.rackLetters.includes(nextLetter) && this.crossCheckResults[nextPos].includes(nextLetter)) {
-            const rackIndex = this.rackLetters.indexOf(nextLetter);
+          if (
+            this.rackLetters.some(l => l === nextLetter || l === '.') 
+            && this.crossCheckResults[nextPos].includes(nextLetter)
+            ) {
+            const rackIndex = this.rackLetters.indexOf(nextLetter) !== -1 
+              ? this.rackLetters.indexOf(nextLetter)
+              : this.rackLetters.indexOf('.');
+            const storedLetter = this.rackLetters[rackIndex];
             this.rackLetters[rackIndex] = null;
             this.extendAfter(
               partialWord + nextLetter,
@@ -201,7 +227,7 @@ export default class Solver {
               true
             );
 
-            this.rackLetters[rackIndex] = nextLetter;
+            this.rackLetters[rackIndex] = storedLetter;
           }
         }
       } else {
@@ -218,10 +244,23 @@ export default class Solver {
     }
   }
 
-  findAllOptions() {
+  findAllOptions(rack, turns) {
+    this.rackTiles = rack;
+    this.rackLetters = this.rackTiles.map(tile => {
+      if (tile !== null) {
+        return tile.letter !== null ? tile.letter : '.';
+      }
+
+      return null;
+    });
+    this.turns = turns;
+    this.allMoves = [];
+
     for (let direction of ['across', 'down']) {
       this.direction = direction;
-      let anchors = this.findAnchors();
+      const anchors = this.board.getCellTile([7, 7]) === null 
+        ? [[7, 7]] // use center square as anchor for first move
+        : this.findAnchors();
       this.crossCheckResults = this.crossCheck();
       for (let anchorPos of anchors) {
         let partialWord = '';
@@ -229,7 +268,7 @@ export default class Solver {
         if (this.board.isFilled(this.before(anchorPos))) {
           let scanPos = this.before(anchorPos);
           partialWord = this.board.getCellTile(scanPos).letter + partialWord;
-          while (this.board.isFilled(scanPos)) {
+          while (this.board.isFilled(scanPos) && this.board.inBounds(this.before(scanPos))) {
             scanPos = this.before(scanPos);
             let scannedTile = this.board.getCellTile(scanPos);
             partialWord = scannedTile ? this.board.getCellTile(scanPos).letter + partialWord : partialWord;
@@ -249,7 +288,6 @@ export default class Solver {
           let scanPos = anchorPos;
           while (this.board.isEmpty(this.before(scanPos)) && !anchors.includes(this.before(scanPos))) {
             limit++;
-            // console.log(limit);
             scanPos = this.before(scanPos);
           }
           this.beforePart('', this.dictionary.root, anchorPos, limit);
@@ -257,7 +295,6 @@ export default class Solver {
       }
     }
 
-    //console.log(JSON.stringify(this.allMoves, null, 2));
-    return this.allMoves;
+    return this.allMoves.sort((a, b) => b.movePoints - a.movePoints);
   }
 }

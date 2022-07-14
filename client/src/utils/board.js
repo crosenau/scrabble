@@ -1,5 +1,3 @@
-import { isWord } from './dictionary.js';
-
 const cellTypes = [
   {    
     className: 'board__cell',
@@ -52,9 +50,10 @@ const cellTypes = [
 ];
 
 export default class Board {
-  constructor() {
+  constructor(dictionary) {
     const [a, b, c, d, e, f] = cellTypes;
 
+    this.dictionary = dictionary;
     this.size = 15;
     this._cells = [
       [c, a, a, f, a, a, a, c, a, a, a, f, a, a, c],
@@ -177,7 +176,7 @@ export default class Board {
    * @returns {Object}
    */
   copy() {
-    const newBoard = new Board();
+    const newBoard = new Board(this.dictionary);
 
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
@@ -341,8 +340,8 @@ export default class Board {
   evaluatePlayedWords = (words) => {
     const invalidWords = words.reduce((prevWords, word) => {
       const text = word.map(cell => cell.tile.letter).join('');
-      console.log('isWord ', text, isWord(text));
-      if (!isWord(text)) {
+      // console.log('isWord ', text, this.dictionary.isWord(text));
+      if (!this.dictionary.isWord(text)) {
         return [...prevWords, word]
       }
       return prevWords;
@@ -388,7 +387,7 @@ export default class Board {
    * @param {Number} turns 
    * @returns 
    */
-  scorePlayedWords = (playedWords, turns) => {
+  scorePlayedWords = (playedWords, turns, log = false) => {
     // Set className for previously scored tiles
     this._cells.flat().forEach(cell => {
       if (cell.tile && cell.tile.playedTurn !== null) {
@@ -403,7 +402,9 @@ export default class Board {
     playedWords.forEach(word => {
       const indices = word.map(cell => cell.index);
       const score = this.scoreWord(word, turns);
-      console.log(`Scored ${word.map(cell => cell.tile.letter).join('')} for ${score} pts`); 
+      
+      if (log) console.log(`Scored ${word.map(cell => cell.tile.letter).join('')} for ${score} pts`); 
+      
       this._cells.flat().forEach(cell => {
         if (cell.tile && indices.includes(cell.index)) {
           cell.tile.className = 'tile--scored';

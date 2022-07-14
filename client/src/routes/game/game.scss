@@ -17,7 +17,7 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(21, 1fr);
-  grid-template-rows: 3% 94% 3%;
+  grid-template-rows: 2% 96% 2%;
 }
 
 .game__section-1 {
@@ -96,13 +96,41 @@
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
 
-  & > div:nth-child(2) {
+  .player-list__icon {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3;
+    background-color: #446a;
+    width: 5em;
+    height: 5em;
+    border-radius: 10%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+  
+    & > svg {
+      font-size: 2.4em;
+    }
+  
+    .player-list__hearts {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      font-size: 1em;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-end;
+    }
+  }
+
+  .player-list__name {
     grid-column: 2 / 3;
     font-size: 1.5em;
     justify-self: end;
   }
 
-  & > div:nth-child(3) {
+  .player-list__score {
     grid-column: 2 / 3;
     justify-self: end;
     align-self: end;
@@ -110,22 +138,10 @@
 }
 
 .player-list__player--inactive {
-  color: #777;
-}
+  color: #555;
 
-.player-list__icon {
-  grid-column: 1 / 2;
-  grid-row: 1 / 3;
-  background-color: #446a;
-  width: 4em;
-  height: 4em;
-  border-radius: 10%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  & > svg {
-    font-size: 2.5em;
+  & > .player-list__icon {
+    background-color: #223;
   }
 }
 
@@ -178,8 +194,8 @@
 }
 
 .board__cell {
-  background-color: #E0EDFA;
   @include cell;
+  background-color: #E0EDFA;
 }
 
 .board__cell-center {
@@ -225,7 +241,7 @@
   }
 
 .tile {
-  @include tile(#d69f7f);
+  @include tile(#ca8);
   cursor: grab;
 }
 
@@ -263,7 +279,7 @@
 }
 
 .tile--grabbed {
-  @include tile(#d69f7f);
+  @include tile(#ca8);
   position: fixed;
   width: var(--tile-size);
   height: var(--tile-size);
@@ -272,7 +288,7 @@
 }
 
 .tile--invalid {
-  @include tile(#da6c6c);
+  @include tile(#d55);
 }
 
 .tile--scored {
@@ -280,11 +296,11 @@
 }
 
 .tile--played {
-  @include tile(#bb8b6f);
+  @include tile(#975);
 }
 
 .tile--selected {
-  @include tile(#fff1b0);
+  @include tile(#ff7);
 }
 
 // Rack
@@ -306,6 +322,12 @@
     & > .tile, .tile--selected {
       transform: scale(var(--tile-scale-factor));
     }
+}
+
+@media (max-aspect-ratio: 4 / 3) {
+  :root {
+    --board-size: 50vmax;
+  }
 }
 
 // Phone - Profile
@@ -350,21 +372,23 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+
+    .player-list__icon {
+      display: none;
+    }
   
-    & > div:nth-child(2) {
+    // & > div:nth-child(2) {
+    .player-list__name {
       font-size: 1em;
       grid-column: 2 / 3;
       align-self: center;
     }
   
-    & > div:nth-child(3) {
+    // & > div:nth-child(3) {
+    .player-list__score {
       font-size: 1em;
       align-self: center;
     }
-  }
-
-  .player-list__icon {
-    display: none;
   }
 
   .player-list__player--inactive {

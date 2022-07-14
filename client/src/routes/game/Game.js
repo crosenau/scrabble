@@ -19,7 +19,9 @@ export default function Game() {
     players,
     gameOver,
     letterSelectVisible,
+    playerIndex,
     isPlayersTurn,
+    dictionary,
     selectTile,
     grabTileFromBoard,
     grabTileFromRack,
@@ -32,7 +34,7 @@ export default function Game() {
     recallTiles,
     shuffleTiles,
     selectLetter,
-    user
+    bestWord,
   } = useGame();
 
   const [pointerPos, setPointerPos] = useState({ x: 0, y: 0});
@@ -93,16 +95,33 @@ export default function Game() {
           <div>Tiles: {tileBag.length}</div>
           <div>Turn: {turns+1}</div>
         </div>
-        <Lookup />
+        <Lookup dictionary={dictionary}/>
         <div className="turn-buttons">
-          <GreenButton label="Skip" type="button" onClick={skipTurn} disabled={!isPlayersTurn} />
+          <GreenButton 
+            label="Skip" 
+            type="button" 
+            onClick={skipTurn} 
+            disabled={!isPlayersTurn} 
+          />
           { isTradingTiles
-            ? <GreenButton label="Confirm" type="button" onClick={tradeSelectedTiles} disabled={!isPlayersTurn} />
-            : <GreenButton label="Trade" type="button" onClick={toggleIsTradingTiles} disabled={!isPlayersTurn}/>
+            ? <GreenButton 
+                label="Confirm" 
+                type="button" 
+                onClick={tradeSelectedTiles} 
+                disabled={!isPlayersTurn}
+              />
+            : <GreenButton 
+                label="Trade" 
+                type="button" 
+                onClick={toggleIsTradingTiles} 
+                disabled={!isPlayersTurn}
+              />
           }
-
-          <GreenButton label="Play" type="button" onClick={playWords} disabled={!isPlayersTurn}/>
-
+          <GreenButton 
+            label="Play" 
+            type="button" 
+            onClick={playWords} disabled={!isPlayersTurn}
+          />
         </div>
       </div>
       <div className="game__section-2">
@@ -114,8 +133,22 @@ export default function Game() {
         />
         <Rack players={players}/>
         <div className="tile-buttons">
-          <GreenButton label="Recall" type="button" onClick={recallTiles} disabled={!isPlayersTurn}/>
-          <GreenButton label="Shuffle" type="button" onClick={shuffleTiles} />
+          <GreenButton 
+            label="Recall" 
+            type="button" 
+            onClick={recallTiles} disabled={!isPlayersTurn}
+          />
+          <GreenButton 
+            label="Best Word" 
+            type="button" 
+            onClick={bestWord} 
+            disabled={!isPlayersTurn || players[playerIndex].bestWords < 1}
+          />
+          <GreenButton 
+            label="Shuffle" 
+            type="button" 
+            onClick={shuffleTiles} 
+          />
         </div>
       </div>
       { grabbedTile ? (

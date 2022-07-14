@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faCrown, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faCrown, faUserSlash, faHeart } from '@fortawesome/free-solid-svg-icons';
 import './game.scss';
 
 export default function PlayerList({ players, turns, gameOver }) {
@@ -36,8 +36,16 @@ export default function PlayerList({ players, turns, gameOver }) {
                     : faUser
                   : faUserSlash
               } />
+              <div className="player-list__hearts">
+                {[1,2,3,4].map(v => (
+                  v <= player.bestWords
+                    ? <FontAwesomeIcon icon={faHeart} key={v} />
+                    : <FontAwesomeIcon icon={faHeart} key={v} style={{ color: '#111' }} />
+                ))}
+             </div>
             </div>
-            <div className={(!isJoined(player) || !isActive(player)) ? "player-list__name--inactive" : "player-list__name"}>
+
+            <div className={"player-list__name"}>
               {player.userName}
             </div>
             <div className="player-list__score">

@@ -29,7 +29,8 @@ export default function Menu() {
         userId: user.id,
         userName: user.name,
         tiles: tileBag.splice(0, 7),
-        score: 0
+        score: 0,
+        bestWords: 4
       }
     ];
 
@@ -38,7 +39,8 @@ export default function Menu() {
         userId: null,
         userName: '',
         tiles: tileBag.splice(0, 7),
-        score: 0
+        score: 0,
+        bestWords: 4
       });
     }
 

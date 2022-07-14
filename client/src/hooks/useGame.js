@@ -3,10 +3,15 @@ import { useParams } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
 import { SocketContext } from '../contexts/SocketContext';
 import { addTilesToRack } from '../utils/gameUtils';
+import Trie from '../utils/trie.js'
+import wordList from '../utils/wordList.json'
 import Board from '../utils/board.js';
+import Solver from '../utils/solver.js';
 import { cloneDeep, shuffle } from 'lodash';
 
-const board = new Board();
+const dictionary = new Trie(wordList);
+const board = new Board(dictionary);
+const solver = new Solver(dictionary, board);
 
 export default function useGame() {  
   const { user } = useContext(UserContext);
@@ -132,7 +137,7 @@ export default function useGame() {
       return;
     }
 
-    const movePoints = board.scorePlayedWords(playedWords, turns);
+    const movePoints = board.scorePlayedWords(playedWords, turns, true);
 
     setCells(board.cells);
     endTurn(movePoints);
@@ -404,6 +409,49 @@ export default function useGame() {
     setLetterSelectVisible(false);
   };
 
+  const bestWord = () => {
+    if (!isPlayersTurn || players[playerIndex].bestWords === 0) return;
+    
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers[playerIndex].tiles;
+
+    board.resetInvalidTiles();
+    const recalledTiles = board.removeUnplayedTiles();
+
+    addTilesToRack(rack, recalledTiles);
+
+    const bestMove = solver.findAllOptions(rack, turns)[0];
+
+    if (!bestMove) {
+      alert('No moves found');
+      return;
+    }
+
+    newPlayers[playerIndex].bestWords -= 1;
+
+    bestMove.letters.forEach((letter, i) => {
+      if (board.getCellTile(bestMove.positions[i]) !== null) return;
+
+      let rackIndex = rack.findIndex(tile => tile && tile.letter === letter);
+      if (rackIndex === -1) {
+        rackIndex = rack.findIndex(tile => tile && tile.letter === null);
+      }
+
+      if (rackIndex === -1) return;
+
+      const tile = {
+        ...rack[rackIndex],
+        letter: letter,
+      }
+      
+      rack[rackIndex] = null;
+      board.setCellTile(bestMove.positions[i], tile);
+    });
+
+    setCells(board.cells);
+    setPlayers(newPlayers);
+  }
+
   return {
     grabbedTile,
     cells,
@@ -413,7 +461,9 @@ export default function useGame() {
     players,
     gameOver,
     letterSelectVisible,
+    playerIndex,
     isPlayersTurn,
+    dictionary,
     selectTile,
     grabTileFromBoard,
     grabTileFromRack,
@@ -426,5 +476,6 @@ export default function useGame() {
     recallTiles,
     shuffleTiles,
     selectLetter,
-  }
+    bestWord,
+  };
 }
