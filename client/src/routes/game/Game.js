@@ -137,7 +137,7 @@ export default function Game() {
           turns={turns}
           isPlayersTurn
         />
-        <Rack players={players}/>
+        <Rack rack={players[playerIndex].tiles}/>
         <div className="tile-buttons">
           <GreenButton 
             label="Recall" 

@@ -28,9 +28,12 @@ export default function useGame() {
   const [gameOver, setGameOver] = useState(false);
   const [letterSelectVisible, setLetterSelectVisible] = useState(false);
   const [emit, setEmit] = useState(false);
+  const [customEmitValue, setCustomEmitValue] = useState(null);
   
   const playerIndex = players && turns % players.length;
-  const isPlayersTurn = players && players[playerIndex].userId === user.id && !gameOver;
+  const isPlayersTurn = players 
+    && players[playerIndex].userId === user.id 
+    && !gameOver;
 
   // Request game based on gameId in url
   useEffect(() => {
@@ -63,17 +66,16 @@ export default function useGame() {
 
         board.resetCells();
 
-        for (let cell of game.boardTiles) {
+        game.boardTiles.forEach(cell => {
           // const [y, x] = get2dPos(cell.index);
           board.setCellTile(cell.index, cell.tile);
-        }
+        });
 
         setCells(board.cells);
-    
+        setPlayers(game.players);
         setTileBag(game.tileBag);
         setTurns(game.turns);
         setGameName(game.name);
-        setPlayers(game.players);
         setLetterSelectVisible(false);
         setIsTradingTiles(false);
         setGameOver(game.gameOver);
@@ -94,12 +96,12 @@ export default function useGame() {
     }
   }, [gameData]);
   
-  // Emit gameState to server when 'emit' it 'true'
+  // Emit gameState to server when 'emit' is 'true'
   useEffect(() => {
-    console.log('useEffect - uploadType', emit);
+    console.log('Emitting gamestate: ', emit, customEmitValue);
     if (!emit) return;
 
-    const game = {
+    const game = customEmitValue || {
       name: gameName,
       id: gameId,
       boardTiles: board.getPlacedTiles(),
@@ -110,7 +112,8 @@ export default function useGame() {
     };
 
     putGame(game);
-    setEmit(null);
+    setCustomEmitValue(null);
+    setEmit(false);
   }, [emit]);
 
   const playWords = () => {
@@ -168,10 +171,7 @@ export default function useGame() {
     addTilesToRack(rack, newTiles);
 
     // Game over condition
-    if (
-      newTileBag.length === 0 
-      && newPlayers[playerIndex].tiles.filter(tile => tile !== null).length === 0
-      ) {
+    if (newTileBag.length === 0 && rack.every(tile => tile === null)) {
       newPlayers.forEach((player, i) => {
         if (i === playerIndex) return;
 
@@ -197,8 +197,8 @@ export default function useGame() {
 
   const grabTileFromRack = (event) => {
     const newPlayers = cloneDeep(players);
-    const rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
-    const index = event.target.dataset.index
+    const rack = newPlayers[playerIndex].tiles;
+    const index = Number(event.target.dataset.index)
     const tile = rack[index];
 
     if (grabbedTile !== null || tile === null) return;
@@ -214,11 +214,11 @@ export default function useGame() {
 
   const placeTileOnRack = (event) => {
     const target = document.elementFromPoint(event.clientX, event.clientY);
-    const index = target.dataset.index;
+    const index = Number(target.dataset.index);
 
     if (grabbedTile === null) return;
     const newPlayers = cloneDeep(players);
-    const rack = newPlayers.filter(player => player.userId === user.id)[0].tiles;
+    const rack = newPlayers[playerIndex].tiles;
     
     // If a tile is already on rack, store existing tile to swap with grabbedTile
     const swapTile = rack[index] !== null 
@@ -294,11 +294,12 @@ export default function useGame() {
 
   const selectTile = (event) => {
     const newPlayers = cloneDeep(players);
-    const tiles = newPlayers[playerIndex].tiles;
-    const index = event.target.dataset.index;
-    tiles[index].className = tiles[index].className === 'tile--selected'
-      ? 'tile'
-      : 'tile--selected'
+    const rack = newPlayers[playerIndex].tiles;
+    const index = Number(event.target.dataset.index);
+    
+    rack[index].className = rack[index].className === 'tile--selected'
+      ? 'tile' 
+      : 'tile--selected';
 
     setPlayers(newPlayers);
   };
@@ -306,11 +307,10 @@ export default function useGame() {
   const recallTiles = () => {
     if (!isPlayersTurn) return;
     
-    const newPlayers = cloneDeep(players);
-    const rack = newPlayers[playerIndex].tiles;
-
     board.resetInvalidTiles();
     const recalledTiles = board.removeUnplayedTiles();
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers[playerIndex].tiles;
 
     addTilesToRack(rack, recalledTiles);
     
@@ -321,9 +321,6 @@ export default function useGame() {
   const skipTurn = () => {
     if (!isPlayersTurn) return;
 
-    const newPlayers = cloneDeep(players);
-    const rack = newPlayers[playerIndex].tiles;
-
     board.resetInvalidTiles();
     const recalledTiles = board.removeUnplayedTiles();
 
@@ -335,6 +332,9 @@ export default function useGame() {
 
       setGrabbedTile(null);
     }
+
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers[playerIndex].tiles;
 
     addTilesToRack(rack, recalledTiles);
 
@@ -345,18 +345,14 @@ export default function useGame() {
   };
 
   const shuffleTiles = () => {
-    const shuffleIndex = players.findIndex(player => player.userId === user.id);
     const newPlayers = cloneDeep(players);
-    newPlayers[shuffleIndex].tiles = shuffle(newPlayers[shuffleIndex].tiles);
 
+    newPlayers[playerIndex].tiles = shuffle(newPlayers[playerIndex].tiles);
     setPlayers(newPlayers);
   };
 
   const toggleIsTradingTiles = () => {
     if (!isPlayersTurn) return;
-
-    const newPlayers = cloneDeep(players);
-    const rack = newPlayers[playerIndex].tiles;
 
     board.resetInvalidTiles();
     const recalledTiles = board.removeUnplayedTiles();
@@ -369,6 +365,9 @@ export default function useGame() {
 
       setGrabbedTile(null);
     }
+
+    const newPlayers = cloneDeep(players);
+    const rack = newPlayers[playerIndex].tiles;
 
     addTilesToRack(rack, recalledTiles);
 
@@ -382,7 +381,7 @@ export default function useGame() {
     const newPlayers = cloneDeep(players);
     const rack = newPlayers[playerIndex].tiles;
 
-    if (!rack.some(tile => tile.className === 'tile--selected')) {
+    if (!rack.some(tile => tile && tile.className === 'tile--selected')) {
       setIsTradingTiles(!isTradingTiles);
       return;
     }
@@ -391,7 +390,7 @@ export default function useGame() {
       if (tile && tile.className === 'tile--selected') {
         tile.className = 'tile';
         newTileBag.push(tile);
-        rack[i] = newTileBag.splice(0, 1)[0];
+        rack[i] = newTileBag.shift();
       }
     });
 
@@ -417,6 +416,15 @@ export default function useGame() {
 
     board.resetInvalidTiles();
     const recalledTiles = board.removeUnplayedTiles();
+
+    if (grabbedTile !== null) {
+      recalledTiles.push({
+        ...grabbedTile,
+        className: 'tile',
+      });
+
+      setGrabbedTile(null);
+    }
 
     addTilesToRack(rack, recalledTiles);
 
@@ -450,6 +458,12 @@ export default function useGame() {
 
     setCells(board.cells);
     setPlayers(newPlayers);
+    
+    const customEmit = cloneDeep(gameData);
+    customEmit.players[playerIndex].bestWords -= 1;
+
+    setCustomEmitValue(customEmit);
+    setEmit(true);
   }
 
   return {
