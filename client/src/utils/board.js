@@ -4,7 +4,7 @@ const cellTypes = [
     text: null,
     letterScoreMod: null,
     wordScoreMod: null,
-    index: null,
+    pos: null,
     tile: null
   },
   {
@@ -12,7 +12,7 @@ const cellTypes = [
     text: null,
     letterScoreMod: null,
     wordScoreMod: 2,
-    index: null,
+    pos: null,
     tile: null
   },
   {
@@ -20,7 +20,7 @@ const cellTypes = [
     text: 'TW',
     letterScoreMod: null,
     wordScoreMod: 3,
-    index: null,
+    pos: null,
     tile: null
   },
   {
@@ -28,7 +28,7 @@ const cellTypes = [
     text: 'DW',
     letterScoreMod: null,
     wordScoreMod: 2,
-    index: null,
+    pos: null,
     tile: null
   },
   {
@@ -36,7 +36,7 @@ const cellTypes = [
     text: 'TL',
     letterScoreMod: 3,
     wordScoreMod: null,
-    index: null,
+    pos: null,
     tile: null
   },
   {
@@ -44,18 +44,20 @@ const cellTypes = [
     text: 'DL',
     letterScoreMod: 2,
     wordScoreMod: null,
-    index: null,
+    pos: null,
     tile: null
   }
 ];
 
 export default class Board {
+  #cells;
+
   constructor(dictionary) {
     const [a, b, c, d, e, f] = cellTypes;
 
     this.dictionary = dictionary;
     this.size = 15;
-    this._cells = [
+    this.#cells = [
       [c, a, a, f, a, a, a, c, a, a, a, f, a, a, c],
       [a, d, a, a, a, e, a, a, a, e, a, a, a, d, a],
       [a, a, d, a, a, a, f, a, f, a, a, a, d, a, a],
@@ -73,19 +75,19 @@ export default class Board {
       [c, a, a, f, a, a, a, c, a, a, a, f, a, a, c],
     ];
 
-    this._cells.forEach((row, rowIndex) => {
+    this.#cells.forEach((row, rowIndex) => {
       row.forEach((cell, cellIndex) => {
-        this._cells[rowIndex][cellIndex] = {
+        this.#cells[rowIndex][cellIndex] = {
           ...cell,
-          index: (rowIndex * row.length) + cellIndex
+          pos: [rowIndex, cellIndex]
         };
       })
     });
   }
 
   // This may not be optimal since cells is referenced so often. May be best to just make a copy of cells when setting state.
-  get cells() {
-    return this._cells.map(row => row.map(cell => {
+  copyCells() {
+    return this.#cells.map(row => row.map(cell => {
       return {
         ...cell, 
         tile: cell.tile ? { ...cell.tile } : null
@@ -94,12 +96,12 @@ export default class Board {
   }
 
   get transposedCells() {
-    return this._cells[0].map((_, colIndex) => (
-      this._cells.map(row => row[colIndex])));
+    return this.#cells[0].map((_, colIndex) => (
+      this.#cells.map(row => row[colIndex])));
   }
 
   resetCells() {
-    this._cells.forEach(row => row.forEach(cell => {
+    this.#cells.forEach(row => row.forEach(cell => {
       cell.tile = null;
     }));
   }
@@ -107,7 +109,7 @@ export default class Board {
   print() {
     console.log('BOARD\n')
     console.log(
-      this._cells.map(row => (
+      this.#cells.map(row => (
         row.map(cell => cell.tile ? '|' + cell.tile.letter : '|_').join('')
       )).join('\n')
     );
@@ -135,11 +137,9 @@ export default class Board {
    * @returns 
    */
   getCellTile(pos) {
-    const [y, x] = typeof pos === 'number' 
-      ? this.get2dPos(pos) 
-      : pos;
+    const [y, x] = pos;
 
-    return this._cells[y][x].tile;
+    return this.#cells[y][x].tile;
   }
 
   /**
@@ -148,17 +148,13 @@ export default class Board {
    * @param {Object} tile 
    */
   setCellTile(pos, tile) {    
-    const [y, x] = typeof pos === 'number' 
-      ? this.get2dPos(pos) 
-      : pos;
+    const [y, x] = pos;
 
-    this._cells[y][x].tile = tile;
+    this.#cells[y][x].tile = tile;
   }
 
   inBounds(pos) {
-    const [y, x] = typeof pos === 'number' 
-      ? this.get2dPos(pos) 
-      : pos;
+    const [y, x] = pos;
 
     return y >= 0 && y < this.size && x >= 0 && x < this.size;
   }
@@ -180,7 +176,7 @@ export default class Board {
 
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
-        const cell = this._cells[y][x];
+        const cell = this.#cells[y][x];
 
         if (cell.tile) {
           newBoard.setCellTile([y, x], {...cell.tile});
@@ -192,31 +188,21 @@ export default class Board {
   }
 
   /**
-   * Convert a cell's index to a 2d coordinate [row, colum] on board
-   * @param {Number} index 
-   * @returns {Array}
-   */
-  get2dPos(index) {
-    const [y, x] = [Math.floor(index / this.size), index % this.size];
-    return [y, x];
-  }
-
-  /**
    * Determines if unplayed tiles are placed in valid positions
    * @returns {Array<Boolean>} [result, invalidReason]
    */
   isValidPlacement() {
     // Check if any new tiles are placed
-    if (!this._cells.flat().some(cell => cell.tile && cell.tile.playedTurn === null)) {
+    if (!this.#cells.flat().some(cell => cell.tile && cell.tile.playedTurn === null)) {
       return [false, 'You have not placed any tiles.'];
     }
 
     // Check that center tile is filled
-    if (!this._cells[7][7].tile) {
+    if (!this.#cells[7][7].tile) {
       return [false, 'Center square must be filled.'];
     }
 
-    const rowsWithNewTiles = this._cells.reduce((allRows, row) => {
+    const rowsWithNewTiles = this.#cells.reduce((allRows, row) => {
       if (row.some(cell => cell.tile !== null && cell.tile.playedTurn === null)) {
         return [...allRows, row]
       }
@@ -235,7 +221,7 @@ export default class Board {
     }
 
     // Verify that at least one new tile is adjacent to an unplayed tile
-    const existingTiles = this._cells.flat().some(cell => cell.tile !== null && cell.tile.playedTurn !== null);
+    const existingTiles = this.#cells.flat().some(cell => cell.tile !== null && cell.tile.playedTurn !== null);
 
     if (existingTiles) {
       const adjacentToExistingTile = [...rowsWithNewTiles, ...colsWithNewTiles].some(line => {
@@ -279,7 +265,7 @@ export default class Board {
   getPlayedWords() {
     let playableWords = [];
 
-    this._cells.forEach(row => {
+    this.#cells.forEach(row => {
       const word = this.getPlayedWordFromLine(row);
       if (word) {
         playableWords.push(word);
@@ -355,7 +341,7 @@ export default class Board {
    * @returns {undefined} 
    */
   markInvalidTiles() {
-    this._cells.forEach(row => {
+    this.#cells.forEach(row => {
       row.forEach(cell => {
         if (cell.tile && cell.tile.playedTurn === null) {
           cell.tile.className = 'tile--invalid';
@@ -370,13 +356,10 @@ export default class Board {
    */
   markInvalidWords(words) {
     words.forEach(word => {
-      const indices = word.map(cell => cell.index);
-      this._cells.forEach(row => {
-        row.forEach(cell => {
-          if (cell.tile && indices.includes(cell.index)) {
-            cell.tile.className = 'tile--invalid';
-          }
-        });
+      const positions = word.map(cell => cell.pos);
+      positions.forEach(pos => {
+        const tile = this.getCellTile(pos);
+        if (tile) tile.className = 'tile--invalid';
       });
     });
   }
@@ -389,7 +372,7 @@ export default class Board {
    */
   scorePlayedWords = (playedWords, turns, log = false) => {
     // Set className for previously scored tiles
-    this._cells.flat().forEach(cell => {
+    this.#cells.flat().forEach(cell => {
       if (cell.tile && cell.tile.playedTurn !== null) {
         cell.tile.className = 'tile--played';
         cell.tile.totalPoints = null;
@@ -400,18 +383,19 @@ export default class Board {
     let movePoints = 0;
 
     playedWords.forEach(word => {
-      const indices = word.map(cell => cell.index);
+      const positions = word.map(cell => cell.pos);
       const score = this.scoreWord(word, turns);
       
       if (log) console.log(`Scored ${word.map(cell => cell.tile.letter).join('')} for ${score} pts`); 
-      
-      this._cells.flat().forEach(cell => {
-        if (cell.tile && indices.includes(cell.index)) {
-          cell.tile.className = 'tile--scored';
-          cell.tile.playedTurn = turns;
-          cell.tile.totalPoints = cell.index === indices[indices.length-1]
-            ? (cell.tile.totalPoints || 0) + score
-            : cell.tile.totalPoints
+
+      positions.forEach((pos, i) => {
+        const tile = this.getCellTile(pos);
+        if (tile) {
+          tile.className = 'tile--scored';
+          tile.playedTurn = turns;
+          tile.totalPoints = i === positions.length-1
+            ? (tile.totalPoints || 0) + score
+            : tile.totalPoints;
         }
       });
 
@@ -465,7 +449,7 @@ export default class Board {
     const recalledTiles = [];
 
     this.resetInvalidTiles();
-    this._cells
+    this.#cells
       .flat()
       .forEach(cell => {
         if (cell.tile && cell.tile.playedTurn === null) {
@@ -482,12 +466,12 @@ export default class Board {
     return recalledTiles;
   }
 
-  getPlacedTiles() {
-    const cells = this._cells
+  getFilledCells() {
+    const cells = this.#cells
       .flat()
       .map(cell => {
         if (cell.tile) {
-          return { tile: cell.tile, index: cell.index };
+          return { tile: cell.tile, pos: cell.pos };
         }
     
         return null;
@@ -500,12 +484,12 @@ export default class Board {
    * Resets classNames for all 'invalid' tiles
    */
   resetInvalidTiles() {
-    const lastPlayedTurn = this._cells
+    const lastPlayedTurn = this.#cells
       .flat()
       .map(cell => cell.tile ? cell.tile.playedTurn : 0)
       .reduce((a, b) => a > b ? a : b);
 
-    this._cells.forEach(row => {
+    this.#cells.forEach(row => {
       row.forEach(cell => {
         if (cell.tile && cell.tile.className === 'tile--invalid') {
           if (cell.tile.playedTurn === null) {
@@ -525,7 +509,7 @@ export default class Board {
    * @param {String} letter 
    */
   setBlankTileLetter(letter) {
-    this._cells.forEach(row => {
+    this.#cells.forEach(row => {
       row.forEach(cell => {
         if (cell.tile && cell.tile.letter === null) {
           cell.tile.letter = letter;
@@ -533,5 +517,4 @@ export default class Board {
       });
     });
   }
-
 }

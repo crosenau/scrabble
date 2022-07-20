@@ -13,8 +13,8 @@ export default function BoardView({ cells, isPlayersTurn }) {
     {cells.flat().map((cell) => (
       <div 
         className={cell.className}
-        data-index={cell.index}
-        key={cell.index}
+        data-pos={cell.pos}
+        key={cell.pos}
       >
         {cell.tile ? 
           <Tile 

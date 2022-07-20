@@ -19,7 +19,7 @@ export default function useGame() {
   const { gameId } = useParams();
 
   const [grabbedTile, setGrabbedTile] = useState(null);
-  const [cells, setCells] = useState(board.cells);
+  const [cells, setCells] = useState(board.copyCells());
   const [isTradingTiles, setIsTradingTiles] = useState(false);
   const [gameName, setGameName] = useState(null);
   const [tileBag, setTileBag] = useState(null);
@@ -67,11 +67,10 @@ export default function useGame() {
         board.resetCells();
 
         game.boardTiles.forEach(cell => {
-          // const [y, x] = get2dPos(cell.index);
-          board.setCellTile(cell.index, cell.tile);
+          board.setCellTile(cell.pos, cell.tile);
         });
 
-        setCells(board.cells);
+        setCells(board.copyCells());
         setPlayers(game.players);
         setTileBag(game.tileBag);
         setTurns(game.turns);
@@ -104,7 +103,7 @@ export default function useGame() {
     const game = customEmitValue || {
       name: gameName,
       id: gameId,
-      boardTiles: board.getPlacedTiles(),
+      boardTiles: board.getFilledCells(),
       tileBag,
       turns,
       players,
@@ -125,7 +124,7 @@ export default function useGame() {
     if (!validPlacement || playedWords.length === 0) {
       alert('Invalid Move: ' + reason);
       board.markInvalidTiles();
-      setCells(board.cells);
+      setCells(board.copyCells());
       return;
     }
 
@@ -133,7 +132,7 @@ export default function useGame() {
 
     if (invalidWords.length > 0) {
       board.markInvalidWords(invalidWords);
-      setCells(board.cells);
+      setCells(board.copyCells());
       alert(invalidWords.map(word => {
         return `${word.map(cell => cell.tile.letter).join('')} is not a word`;
       }).join('\n'));
@@ -142,7 +141,7 @@ export default function useGame() {
 
     const movePoints = board.scorePlayedWords(playedWords, turns, true);
 
-    setCells(board.cells);
+    setCells(board.copyCells());
     endTurn(movePoints);
   };
 
@@ -237,7 +236,7 @@ export default function useGame() {
   };
 
   const grabTileFromBoard = (event) => {
-    const [y, x] = board.get2dPos(event.target.dataset.index);
+    const [y, x] = event.target.dataset.pos.split(',').map(Number);
     const tileInBoardCell = board.getCellTile([y, x]);
 
     if (
@@ -255,12 +254,12 @@ export default function useGame() {
     
     board.resetInvalidTiles();
     board.setCellTile([y, x], null);
-    setCells(board.cells);
+    setCells(board.copyCells());
   };
 
   const placeTileOnBoard = (event) => {
     const target = document.elementFromPoint(event.clientX, event.clientY);
-    const [y, x] = board.get2dPos(target.dataset.index);
+    const [y, x] = target.dataset.pos.split(',').map(Number);
     const tileInBoardCell = board.getCellTile([y, x]);
 
     if (
@@ -283,7 +282,7 @@ export default function useGame() {
     });
 
     board.resetInvalidTiles();
-    setCells(board.cells);
+    setCells(board.copyCells());
 
     if (grabbedTile.letter === null) {
       setLetterSelectVisible(true);
@@ -314,7 +313,7 @@ export default function useGame() {
 
     addTilesToRack(rack, recalledTiles);
     
-    setCells(board.cells);
+    setCells(board.copyCells());
     setPlayers(newPlayers);
   };
 
@@ -338,7 +337,7 @@ export default function useGame() {
 
     addTilesToRack(rack, recalledTiles);
 
-    setCells(board.cells);
+    setCells(board.copyCells());
     setPlayers(newPlayers);
     setTurns(turns + 1);
     setEmit(true);
@@ -371,7 +370,7 @@ export default function useGame() {
 
     addTilesToRack(rack, recalledTiles);
 
-    setCells(board.cells);
+    setCells(board.copyCells());
     setPlayers(newPlayers);
     setIsTradingTiles(!isTradingTiles);
   };
@@ -404,7 +403,7 @@ export default function useGame() {
   const selectLetter = (letter) => {
     board.setBlankTileLetter(letter);
 
-    setCells(board.cells);
+    setCells(board.copyCells());
     setLetterSelectVisible(false);
   };
 
@@ -456,7 +455,7 @@ export default function useGame() {
       board.setCellTile(bestMove.positions[i], tile);
     });
 
-    setCells(board.cells);
+    setCells(board.copyCells());
     setPlayers(newPlayers);
     
     const customEmit = cloneDeep(gameData);
